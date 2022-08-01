@@ -21,7 +21,7 @@
 	 //
 	 //    sw "github.com/myname/myrepo/go"
 	 //
-	 sw "github.com/Yet-Another-Issue-Tracker/issue-service"
+	 sw "issue-service/go"
  )
  
  func main() {
