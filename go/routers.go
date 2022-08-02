@@ -59,14 +59,49 @@ var routes = Routes{
 	Route{
 		"AddIssue",
 		strings.ToUpper("Post"),
-		"/v1/{sprintId}/issues",
+		"/v1/projects/{projectId}/sprints/{sprintId}/issues",
 		AddIssue,
+	},
+
+	Route{
+		"GetIssues",
+		strings.ToUpper("Get"),
+		"/v1/projects/{projectId}/sprints/{sprintId}/issues",
+		GetIssues,
+	},
+
+	Route{
+		"GetIssuesById",
+		strings.ToUpper("Get"),
+		"/v1/projects/{projectId}/sprints/{sprintId}/issues/{issueId}",
+		GetIssuesById,
+	},
+
+	Route{
+		"PatchIssuesById",
+		strings.ToUpper("Patch"),
+		"/v1/projects/{projectId}/sprints/{sprintId}/issues/{issueId}",
+		PatchIssuesById,
+	},
+
+	Route{
+		"AddProject",
+		strings.ToUpper("Post"),
+		"/v1/projects",
+		AddProject,
 	},
 
 	Route{
 		"AddSprint",
 		strings.ToUpper("Post"),
-		"/v1/sprints",
+		"/v1/projects/{projectId}/sprints",
 		AddSprint,
+	},
+
+	Route{
+		"PatchSprint",
+		strings.ToUpper("Patch"),
+		"/v1/projects/{projectId}/sprints/{sprintId}",
+		PatchSprint,
 	},
 }
