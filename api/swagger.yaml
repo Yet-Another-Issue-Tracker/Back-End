@@ -16,13 +16,15 @@ tags:
   description: "CRUD operation for issue"
 - name: "Sprint"
   description: "CRUD operation for sprint"
+- name: "Project"
+  description: "CRUD operation for project"
 schemes:
 - "https"
 - "http"
 security:
 - ApiKeyAuth: []
 paths:
-  /sprints:
+  /projects/{projectId}/sprints:
     post:
       tags:
       - "Sprint"
@@ -41,29 +43,43 @@ paths:
         schema:
           $ref: "#/definitions/Sprint"
         x-exportParamName: "Body"
+      - name: "projectId"
+        in: "path"
+        description: "Id of the project that the sprint needs to be created in"
+        required: true
+        type: "string"
+        x-exportParamName: "ProjectId"
       responses:
+        "201":
+          description: "Created"
+          schema:
+            type: "object"
+            properties:
+              id:
+                type: "string"
         "405":
           description: "Invalid input"
-  /{sprintId}/issues:
-    post:
+  /projects/{projectId}/sprints/{sprintId}:
+    patch:
       tags:
-      - "Issue"
-      summary: "Add a new issue to the sprint"
+      - "Sprint"
+      summary: "Patch an existing sprint"
       description: ""
-      operationId: "addPet"
+      operationId: "patchSprint"
       consumes:
       - "application/json"
-      - "application/xml"
       produces:
-      - "application/xml"
       - "application/json"
       parameters:
       - in: "body"
         name: "body"
-        description: "Pet object that needs to be added to the store"
+        description: "Issue object that needs to be added to the sprint"
         required: true
         schema:
-          $ref: "#/definitions/Issue"
+          type: "object"
+          properties:
+            completed:
+              type: "boolean"
         x-exportParamName: "Body"
       - name: "sprintId"
         in: "path"
@@ -71,7 +87,191 @@ paths:
         required: true
         type: "string"
         x-exportParamName: "SprintId"
+      - name: "projectId"
+        in: "path"
+        description: "Id of the project of the spring"
+        required: true
+        type: "string"
+        x-exportParamName: "ProjectId"
       responses:
+        "204":
+          description: "Patched"
+        "405":
+          description: "Invalid input"
+  /projects/{projectId}/sprints/{sprintId}/issues:
+    get:
+      tags:
+      - "Issue"
+      summary: "Get the list of existing issues of the sprint"
+      description: ""
+      operationId: "getIssues"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "projectId"
+        in: "path"
+        description: "Id of the project of the spring"
+        required: true
+        type: "string"
+        x-exportParamName: "ProjectId"
+      - name: "sprintId"
+        in: "path"
+        description: "Id of the sprint that the issue need to be added to"
+        required: true
+        type: "string"
+        x-exportParamName: "SprintId"
+      responses:
+        "200":
+          description: "List of issues"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/Issue"
+    post:
+      tags:
+      - "Issue"
+      summary: "Add a new issue to the sprint"
+      description: ""
+      operationId: "addIssue"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "projectId"
+        in: "path"
+        description: "Id of the project of the spring"
+        required: true
+        type: "string"
+        x-exportParamName: "ProjectId"
+      - name: "sprintId"
+        in: "path"
+        description: "Id of the sprint that the issue need to be added to"
+        required: true
+        type: "string"
+        x-exportParamName: "SprintId"
+      - in: "body"
+        name: "body"
+        description: "Issue object that needs to be added to the sprint"
+        required: true
+        schema:
+          $ref: "#/definitions/Issue"
+        x-exportParamName: "Body"
+      responses:
+        "201":
+          description: "Created"
+          schema:
+            type: "object"
+            properties:
+              id:
+                type: "string"
+        "405":
+          description: "Invalid input"
+  /projects/{projectId}/sprints/{sprintId}/issues/{issueId}:
+    get:
+      tags:
+      - "Issue"
+      summary: "Get the specific issue detail by id"
+      description: ""
+      operationId: "getIssuesById"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "sprintId"
+        in: "path"
+        description: "Id of the sprint that the issue need to be added to"
+        required: true
+        type: "string"
+        x-exportParamName: "SprintId"
+      - name: "issueId"
+        in: "path"
+        description: "Id of the issue detail"
+        required: true
+        type: "string"
+        x-exportParamName: "IssueId"
+      - name: "projectId"
+        in: "path"
+        description: "Id of the project of the spring"
+        required: true
+        type: "string"
+        x-exportParamName: "ProjectId"
+      responses:
+        "200":
+          description: "List of issues"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/Issue"
+    patch:
+      tags:
+      - "Issue"
+      summary: "Patch the specific issue by id"
+      description: ""
+      operationId: "patchIssuesById"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "sprintId"
+        in: "path"
+        description: "Id of the sprint that the issue need to be added to"
+        required: true
+        type: "string"
+        x-exportParamName: "SprintId"
+      - name: "issueId"
+        in: "path"
+        description: "Id of the issue detail"
+        required: true
+        type: "string"
+        x-exportParamName: "IssueId"
+      - name: "projectId"
+        in: "path"
+        description: "Id of the project of the spring"
+        required: true
+        type: "string"
+        x-exportParamName: "ProjectId"
+      - in: "body"
+        name: "body"
+        description: "Issue properties that need to be patched"
+        required: true
+        schema:
+          $ref: "#/definitions/Issue"
+        x-exportParamName: "Body"
+      responses:
+        "204":
+          description: "Patched"
+  /projects:
+    post:
+      tags:
+      - "Project"
+      summary: "Add a new project"
+      description: ""
+      operationId: "addProject"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "body"
+        name: "body"
+        description: "Sprint object that needs to be added"
+        required: true
+        schema:
+          $ref: "#/definitions/Project"
+        x-exportParamName: "Body"
+      responses:
+        "201":
+          description: "Created"
+          schema:
+            type: "object"
+            properties:
+              id:
+                type: "string"
         "405":
           description: "Invalid input"
 securityDefinitions:
@@ -102,16 +302,42 @@ definitions:
   Issue:
     type: "object"
     properties:
+      id:
+        type: "string"
       type:
         type: "string"
       title:
         type: "string"
       description:
         type: "string"
+      status:
+        type: "string"
+        enum:
+        - "Done"
+        - "In Progress"
+        - "To Do"
+      assignee:
+        type: "string"
     example:
       description: "description"
+      id: "id"
+      assignee: "assignee"
       type: "type"
       title: "title"
+      status: "Done"
+  Project:
+    type: "object"
+    properties:
+      id:
+        type: "string"
+      client:
+        type: "string"
+      type:
+        type: "string"
+    example:
+      client: "client"
+      id: "id"
+      type: "type"
 externalDocs:
   description: "Find out more about Swagger"
   url: "http://swagger.io"
