@@ -23,17 +23,18 @@ func createProject() ([]byte, error) {
 
 	return responseBody, nil
 }
+func CreateAddProjectHandler(databaseConnection string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+		w.WriteHeader(http.StatusOK)
+		projectId, err := createProject()
 
-func AddProject(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	w.WriteHeader(http.StatusOK)
-	projectId, err := createProject()
+		if err != nil {
+			log.Fatalln("failed response unmarshalling")
+			http.Error(w, errGeneric.Error(), http.StatusInternalServerError)
+			return
+		}
 
-	if err != nil {
-		log.Fatalln("failed response unmarshalling")
-		http.Error(w, errGeneric.Error(), http.StatusInternalServerError)
-		return
+		w.Write(projectId)
 	}
-
-	w.Write(projectId)
 }

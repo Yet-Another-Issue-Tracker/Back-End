@@ -1,7 +1,6 @@
 package routes
 
 import (
-	"fmt"
 	"net/http"
 	"strings"
 
@@ -12,16 +11,16 @@ type Route struct {
 	Name        string
 	Method      string
 	Pattern     string
-	HandlerFunc http.HandlerFunc
+	HandlerFunc func(string) http.HandlerFunc
 }
 
 type Routes []Route
 
-func NewRouter() *mux.Router {
+func NewRouter(config EnvConfiguration) *mux.Router {
 	router := mux.NewRouter().StrictSlash(true)
 	for _, route := range routes {
 		var handler http.Handler
-		handler = route.HandlerFunc
+		handler = route.HandlerFunc("")
 		handler = Logger(handler, route.Name)
 
 		router.
@@ -34,64 +33,67 @@ func NewRouter() *mux.Router {
 	return router
 }
 
-func Index(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "Hello World!")
-}
-
 var routes = Routes{
 	Route{
-		"Index",
-		"GET",
-		"/v1/",
-		Index,
+		"Healthiness",
+		strings.ToUpper("Get"),
+		"/-/health",
+		CreateHealthinessHandler,
+	},
+
+	Route{
+		"Healthiness",
+		strings.ToUpper("Get"),
+		"/-/ready",
+		CreateReadinessHandler,
 	},
 
 	Route{
 		"AddIssue",
 		strings.ToUpper("Post"),
 		"/v1/projects/{projectId}/sprints/{sprintId}/issues",
-		AddIssue,
+		CreateAddIssueHandler,
 	},
 
 	Route{
 		"GetIssues",
 		strings.ToUpper("Get"),
 		"/v1/projects/{projectId}/sprints/{sprintId}/issues",
-		GetIssues,
+		CreateGetIssuesHandler,
 	},
 
 	Route{
 		"GetIssuesById",
 		strings.ToUpper("Get"),
 		"/v1/projects/{projectId}/sprints/{sprintId}/issues/{issueId}",
-		GetIssuesById,
+		CreateGetIssuesByIdHandler,
 	},
 
 	Route{
 		"PatchIssuesById",
 		strings.ToUpper("Patch"),
 		"/v1/projects/{projectId}/sprints/{sprintId}/issues/{issueId}",
-		PatchIssuesById,
+		CreatePatchIssuesByIdHandler,
 	},
 
 	Route{
 		"AddProject",
 		strings.ToUpper("Post"),
 		"/v1/projects",
-		AddProject,
+		CreateAddProjectHandler,
 	},
 
 	Route{
 		"AddSprint",
 		strings.ToUpper("Post"),
 		"/v1/projects/{projectId}/sprints",
-		AddSprint,
+		CreateAddSprintHandler,
 	},
 
 	Route{
 		"PatchSprint",
 		strings.ToUpper("Patch"),
 		"/v1/projects/{projectId}/sprints/{sprintId}",
-		PatchSprint,
+		CreatePatchSprintHandler,
 	},
 }

@@ -4,16 +4,22 @@ import (
 	"net/http"
 )
 
-func CreateAddSprintHandler(connectionString string) http.HandlerFunc {
+func CreateHealthinessHandler(connectionString string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		w.WriteHeader(http.StatusOK)
+
+		response := []byte("ok")
+		w.Write(response)
 	}
 }
 
-func CreatePatchSprintHandler(connectionString string) http.HandlerFunc {
+func CreateReadinessHandler(connectionString string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		w.WriteHeader(http.StatusOK)
+
+		response := []byte("ok")
+		w.Write(response)
 	}
 }
