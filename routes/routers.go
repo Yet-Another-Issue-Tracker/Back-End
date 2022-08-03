@@ -5,22 +5,29 @@ import (
 	"strings"
 
 	"github.com/gorilla/mux"
+	"gorm.io/gorm"
 )
 
 type Route struct {
 	Name        string
 	Method      string
 	Pattern     string
-	HandlerFunc func(string) http.HandlerFunc
+	HandlerFunc func(*gorm.DB) http.HandlerFunc
 }
 
 type Routes []Route
 
 func NewRouter(config EnvConfiguration) *mux.Router {
 	router := mux.NewRouter().StrictSlash(true)
+	db, err := InitDatabase(config)
+
+	if err != nil {
+		return &mux.Router{}
+	}
+
 	for _, route := range routes {
 		var handler http.Handler
-		handler = route.HandlerFunc("")
+		handler = route.HandlerFunc(db)
 		handler = Logger(handler, route.Name)
 
 		router.

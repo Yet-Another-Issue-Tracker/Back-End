@@ -5,6 +5,8 @@ import (
 	"errors"
 	"log"
 	"net/http"
+
+	"gorm.io/gorm"
 )
 
 var (
@@ -23,7 +25,7 @@ func createProject() ([]byte, error) {
 
 	return responseBody, nil
 }
-func CreateAddProjectHandler(databaseConnection string) http.HandlerFunc {
+func CreateAddProjectHandler(database *gorm.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		w.WriteHeader(http.StatusOK)

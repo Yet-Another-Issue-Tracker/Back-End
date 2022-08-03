@@ -2,9 +2,11 @@ package routes
 
 import (
 	"net/http"
+
+	"gorm.io/gorm"
 )
 
-func CreateHealthinessHandler(connectionString string) http.HandlerFunc {
+func CreateHealthinessHandler(database *gorm.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		w.WriteHeader(http.StatusOK)
@@ -14,7 +16,7 @@ func CreateHealthinessHandler(connectionString string) http.HandlerFunc {
 	}
 }
 
-func CreateReadinessHandler(connectionString string) http.HandlerFunc {
+func CreateReadinessHandler(database *gorm.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		w.WriteHeader(http.StatusOK)
