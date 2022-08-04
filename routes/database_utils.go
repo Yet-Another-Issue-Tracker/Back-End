@@ -29,7 +29,7 @@ func ConnectDatabase(config EnvConfiguration) (*gorm.DB, error) {
 	return db, nil
 }
 
-func PrepareDatabase(database *gorm.DB) {
+func SetupAndResetDatabase(database *gorm.DB) {
 	database.AutoMigrate(&Project{})
 	database.Exec("DELETE FROM projects")
 	database.Exec("ALTER SEQUENCE projects_id_seq RESTART WITH 1")

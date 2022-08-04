@@ -20,7 +20,6 @@ func TestCreateProject(testCase *testing.T) {
 		return
 	}
 	database, err := ConnectDatabase(config)
-	PrepareDatabase(database)
 
 	if err != nil {
 		log.Fatalf("Error connecting to database %s", err.Error())
@@ -28,7 +27,7 @@ func TestCreateProject(testCase *testing.T) {
 	}
 
 	testCase.Run("createProject return the new id", func(t *testing.T) {
-		database.AutoMigrate(&Project{})
+		SetupAndResetDatabase(database)
 
 		response, err := createProject(database)
 
@@ -36,9 +35,21 @@ func TestCreateProject(testCase *testing.T) {
 
 		database.First(&foundProject)
 
-		log.Printf("Project %s", foundProject.Id)
-
 		require.Equal(t, nil, err)
 		require.Equal(t, string(expectedJsonReponse), string(response))
+	})
+
+	testCase.Run("create two projects", func(t *testing.T) {
+		SetupAndResetDatabase(database)
+
+		createProject(database)
+		createProject(database)
+
+		var foundProjects []Project
+
+		result := database.Find(&foundProjects)
+		log.Printf("number of rows %d", result.RowsAffected)
+		require.Equal(t, nil, err)
+		require.Equal(t, 2, int(result.RowsAffected))
 	})
 }
