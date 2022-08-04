@@ -21,9 +21,10 @@ func createProject(database *gorm.DB, projectName string, projectType string, pr
 	result := database.Create(&project)
 
 	if result.Error != nil {
-		log.Fatalf("Error creating new project %s", result.Error.Error())
+		log.Printf("Error creating new project: %s", result.Error.Error())
 		return nil, result.Error
 	}
+
 	response := CreateProjectResponse{Id: fmt.Sprint(project.ID)}
 
 	responseBody, err := json.Marshal(response)
@@ -33,6 +34,7 @@ func createProject(database *gorm.DB, projectName string, projectType string, pr
 
 	return responseBody, nil
 }
+
 func CreateAddProjectHandler(database *gorm.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
@@ -41,7 +43,7 @@ func CreateAddProjectHandler(database *gorm.DB) http.HandlerFunc {
 		projectId, err := createProject(database, "", "", "")
 
 		if err != nil {
-			log.Fatalln("failed response unmarshalling")
+			log.Println("failed response unmarshalling")
 			http.Error(w, errGeneric.Error(), http.StatusInternalServerError)
 			return
 		}

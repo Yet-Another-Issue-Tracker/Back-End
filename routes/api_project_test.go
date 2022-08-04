@@ -9,10 +9,6 @@ import (
 )
 
 func TestCreateProject(testCase *testing.T) {
-	expectedResponse := CreateProjectResponse{
-		Id: "1",
-	}
-	expectedJsonReponse, _ := json.Marshal(expectedResponse)
 
 	config, err := GetConfig("../.env")
 	if err != nil {
@@ -25,6 +21,10 @@ func TestCreateProject(testCase *testing.T) {
 		log.Fatalf("Error connecting to database %s", err.Error())
 		return
 	}
+	expectedResponse := CreateProjectResponse{
+		Id: "1",
+	}
+	expectedJsonReponse, _ := json.Marshal(expectedResponse)
 
 	testCase.Run("createProject return the new id", func(t *testing.T) {
 		SetupAndResetDatabase(database)
@@ -60,8 +60,8 @@ func TestCreateProject(testCase *testing.T) {
 	testCase.Run("create two projects", func(t *testing.T) {
 		SetupAndResetDatabase(database)
 
-		createProject(database, "", "", "")
-		createProject(database, "", "", "")
+		createProject(database, "project-1", "", "")
+		createProject(database, "project-2", "", "")
 
 		var foundProjects []Project
 
@@ -70,4 +70,22 @@ func TestCreateProject(testCase *testing.T) {
 		require.Equal(t, nil, err)
 		require.Equal(t, 2, int(result.RowsAffected))
 	})
+
+	testCase.Run("createProject returns error if project with same name already exits", func(t *testing.T) {
+		SetupAndResetDatabase(database)
+		expectedError := "ERROR: duplicate key value violates unique constraint \"idx_projects_name\" (SQLSTATE 23505)"
+
+		expectedProjectName := "project-name"
+		expectedType := "project-type"
+		expectedClient := "project-client"
+
+		_, err1 := createProject(database, expectedProjectName, expectedType, expectedClient)
+
+		require.Equal(t, nil, err1)
+
+		_, err2 := createProject(database, expectedProjectName, expectedType, expectedClient)
+
+		require.Equal(t, expectedError, err2.Error())
+	})
+
 }
