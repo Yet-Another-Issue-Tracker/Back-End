@@ -2,17 +2,12 @@ package routes
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
-	"log"
 	"net/http"
 
-	"gorm.io/gorm"
-)
+	log "github.com/sirupsen/logrus"
 
-var (
-	errGeneric = errors.New("internal Server Error")
-	// errBadRequest = errors.New("bad Request")
+	"gorm.io/gorm"
 )
 
 func createProject(database *gorm.DB, projectName string, projectType string, projectClient string) ([]byte, error) {
@@ -21,7 +16,7 @@ func createProject(database *gorm.DB, projectName string, projectType string, pr
 	result := database.Create(&project)
 
 	if result.Error != nil {
-		log.Printf("Error creating new project: %s", result.Error.Error())
+		log.WithField("error", result.Error.Error()).Error("Error creating new project")
 		return nil, result.Error
 	}
 
@@ -38,13 +33,11 @@ func createProject(database *gorm.DB, projectName string, projectType string, pr
 func CreateAddProjectHandler(database *gorm.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-		w.WriteHeader(http.StatusOK)
 
 		projectId, err := createProject(database, "", "", "")
 
 		if err != nil {
-			log.Println("failed response unmarshalling")
-			http.Error(w, errGeneric.Error(), http.StatusInternalServerError)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
