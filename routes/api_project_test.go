@@ -29,7 +29,7 @@ func TestCreateProject(testCase *testing.T) {
 	testCase.Run("createProject return the new id", func(t *testing.T) {
 		SetupAndResetDatabase(database)
 
-		response, err := createProject(database)
+		response, err := createProject(database, "", "", "")
 
 		var foundProject Project
 
@@ -39,11 +39,29 @@ func TestCreateProject(testCase *testing.T) {
 		require.Equal(t, string(expectedJsonReponse), string(response))
 	})
 
+	testCase.Run("createProject with specific name and type", func(t *testing.T) {
+		SetupAndResetDatabase(database)
+		expectedProjectName := "project-name"
+		expectedType := "project-type"
+		expectedClient := "project-client"
+
+		createProject(database, expectedProjectName, expectedType, expectedClient)
+
+		var foundProject Project
+
+		database.First(&foundProject)
+
+		require.Equal(t, nil, err)
+		require.Equal(t, expectedProjectName, foundProject.Name)
+		require.Equal(t, expectedType, foundProject.Type)
+		require.Equal(t, expectedClient, foundProject.Client)
+	})
+
 	testCase.Run("create two projects", func(t *testing.T) {
 		SetupAndResetDatabase(database)
 
-		createProject(database)
-		createProject(database)
+		createProject(database, "", "", "")
+		createProject(database, "", "", "")
 
 		var foundProjects []Project
 

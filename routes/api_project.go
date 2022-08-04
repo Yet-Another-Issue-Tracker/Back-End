@@ -15,8 +15,8 @@ var (
 	// errBadRequest = errors.New("bad Request")
 )
 
-func createProject(database *gorm.DB) ([]byte, error) {
-	project := Project{Client: "Pippo", Type: "Scrum"}
+func createProject(database *gorm.DB, projectName string, projectType string, projectClient string) ([]byte, error) {
+	project := Project{Name: projectName, Client: projectClient, Type: projectType}
 
 	result := database.Create(&project)
 
@@ -38,7 +38,7 @@ func CreateAddProjectHandler(database *gorm.DB) http.HandlerFunc {
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		w.WriteHeader(http.StatusOK)
 
-		projectId, err := createProject(database)
+		projectId, err := createProject(database, "", "", "")
 
 		if err != nil {
 			log.Fatalln("failed response unmarshalling")
