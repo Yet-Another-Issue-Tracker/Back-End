@@ -3,6 +3,7 @@ package routes
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log"
 	"net/http"
 
@@ -14,10 +15,17 @@ var (
 	// errBadRequest = errors.New("bad Request")
 )
 
-func createProject() ([]byte, error) {
-	response := CreateProjectResponse{
-		Id: "123",
+func createProject(database *gorm.DB) ([]byte, error) {
+	project := Project{Client: "Pippo", Type: "Scrum"}
+
+	result := database.Create(&project)
+
+	if result.Error != nil {
+		log.Fatalf("Error creating new project %s", result.Error.Error())
+		return nil, result.Error
 	}
+	response := CreateProjectResponse{Id: fmt.Sprint(project.ID)}
+
 	responseBody, err := json.Marshal(response)
 	if err != nil {
 		return nil, err
@@ -29,7 +37,8 @@ func CreateAddProjectHandler(database *gorm.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		w.WriteHeader(http.StatusOK)
-		projectId, err := createProject()
+
+		projectId, err := createProject(database)
 
 		if err != nil {
 			log.Fatalln("failed response unmarshalling")

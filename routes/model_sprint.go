@@ -1,11 +1,18 @@
 package routes
 
+import (
+	"time"
+
+	"gorm.io/gorm"
+)
+
 type Sprint struct {
-	Number string `json:"number,omitempty"`
-
-	StartDate string `json:"startDate,omitempty"`
-
-	EndDate string `json:"endDate,omitempty"`
-
-	Completed bool `json:"completed,omitempty"`
+	ID        uint      `gorm:"primaryKey"`
+	Number    string    `json:"number,omitempty"`
+	StartDate time.Time `json:"startDate,omitempty"`
+	EndDate   time.Time `json:"endDate,omitempty"`
+	Completed bool      `json:"completed,omitempty"`
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	DeletedAt gorm.DeletedAt `gorm:"index"`
 }

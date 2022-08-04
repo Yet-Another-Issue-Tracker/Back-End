@@ -1,7 +1,8 @@
 package routes
 
 type EnvConfiguration struct {
-	DATABASE_CONNECTION_STRING string
-	DATABASE_PASSWORD          string
-	DATABASE_USERNAME          string
+	DATABASE_HOST     string
+	DATABASE_NAME     string
+	DATABASE_PASSWORD string
+	DATABASE_USERNAME string
 }

@@ -19,7 +19,7 @@ type Routes []Route
 
 func NewRouter(config EnvConfiguration) *mux.Router {
 	router := mux.NewRouter().StrictSlash(true)
-	db, err := InitDatabase(config)
+	db, err := ConnectDatabase(config)
 
 	if err != nil {
 		return &mux.Router{}

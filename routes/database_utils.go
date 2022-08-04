@@ -4,44 +4,33 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/spf13/viper"
-	"gorm.io/driver/sqlserver"
+	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
 
-func getConfig() (EnvConfiguration, error) {
-	viper.SetConfigFile(".env")
-
-	if err := viper.ReadInConfig(); err != nil {
-		return EnvConfiguration{}, err
-	}
-
-	var config EnvConfiguration
-
-	if err := viper.Unmarshal(&config); err != nil {
-		log.Fatal("Error reading env configuration")
-		return EnvConfiguration{}, err
-	}
-
-	return config, nil
-}
-
 func getConnectionString(config EnvConfiguration) string {
-	return fmt.Sprintf("sqlserver://%s:%s@%s",
+	return fmt.Sprintf("host=%s user=%s password=%s port=5432 dbname=%s",
+		config.DATABASE_HOST,
 		config.DATABASE_USERNAME,
 		config.DATABASE_PASSWORD,
-		config.DATABASE_CONNECTION_STRING,
+		config.DATABASE_NAME,
 	)
 }
 
-func InitDatabase(config EnvConfiguration) (*gorm.DB, error) {
+func ConnectDatabase(config EnvConfiguration) (*gorm.DB, error) {
 	dsn := getConnectionString(config)
 
-	db, err := gorm.Open(sqlserver.Open(dsn), &gorm.Config{})
+	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 
 	if err != nil {
 		log.Fatalf("Error connecting to database %s", err.Error())
 		return &gorm.DB{}, err
 	}
 	return db, nil
+}
+
+func PrepareDatabase(database *gorm.DB) {
+	database.AutoMigrate(&Project{})
+	database.Exec("DELETE FROM projects")
+	database.Exec("ALTER SEQUENCE projects_id_seq RESTART WITH 1")
 }
