@@ -2,14 +2,14 @@ package routes
 
 import (
 	"encoding/json"
-	"log"
 	"testing"
+
+	log "github.com/sirupsen/logrus"
 
 	"github.com/stretchr/testify/require"
 )
 
 func TestCreateProject(testCase *testing.T) {
-
 	config, err := GetConfig("../.env")
 	if err != nil {
 		log.Fatalf("Error reading env configuration: %s", err.Error())
@@ -87,5 +87,8 @@ func TestCreateProject(testCase *testing.T) {
 
 		require.Equal(t, expectedError, err2.Error())
 	})
+}
+
+func TestCreateProjectHandler(testCase *testing.T) {
 
 }

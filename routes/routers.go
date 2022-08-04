@@ -44,7 +44,7 @@ var routes = Routes{
 	Route{
 		"Healthiness",
 		strings.ToUpper("Get"),
-		"/-/health",
+		"/-/healthz",
 		CreateHealthinessHandler,
 	},
 
