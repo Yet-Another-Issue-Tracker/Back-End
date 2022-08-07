@@ -93,7 +93,14 @@ func TestCreateProject(testCase *testing.T) {
 	})
 }
 
-func TestCreateProjectHandler(testCase *testing.T) {
+type Case struct {
+	expected    CreateProjectResponse
+	input       Project
+	description string
+}
+type TestCases []Case
+
+func TestCreateProjectHandler(test *testing.T) {
 	config, err := GetConfig("../.env")
 	if err != nil {
 		log.Fatalf("Error reading env configuration: %s", err.Error())
@@ -106,39 +113,44 @@ func TestCreateProjectHandler(testCase *testing.T) {
 		return
 	}
 
-	inputProject := Project{
-		Name:   "project-name",
-		Client: "client-name",
-		Type:   "project-type",
+	cases := TestCases{
+		{
+			input: Project{
+				Name:   "project-name",
+				Client: "client-name",
+				Type:   "project-type",
+			}, expected: CreateProjectResponse{
+				Id: "1",
+			},
+			description: "Project is created",
+		},
 	}
 
-	testCase.Run("/projects - ok", func(t *testing.T) {
-		SetupAndResetDatabase(database)
+	for _, testCase := range cases {
+		test.Run(testCase.description, func(t *testing.T) {
+			SetupAndResetDatabase(database)
+			expectedJsonReponse, _ := json.Marshal(testCase.expected)
+			requestBody, err := json.Marshal(testCase.input)
 
-		expectedResponse := CreateProjectResponse{
-			Id: "1",
-		}
-		expectedJsonReponse, _ := json.Marshal(expectedResponse)
+			if err != nil {
+				log.WithField("error", err.Error()).Error("Error marshaling json")
+			}
 
-		requestBody, err := json.Marshal(inputProject)
+			bodyReader := bytes.NewReader(requestBody)
 
-		if err != nil {
-			log.WithField("error", err.Error()).Error("Error marshaling json")
-		}
+			responseRecorder := httptest.NewRecorder()
+			request, requestError := http.NewRequest(http.MethodPost, "/v1/projects", bodyReader)
+			require.NoError(t, requestError, "Error creating the /projects request")
 
-		bodyReader := bytes.NewReader(requestBody)
+			testRouter.ServeHTTP(responseRecorder, request)
+			statusCode := responseRecorder.Result().StatusCode
+			require.Equal(t, http.StatusOK, statusCode, "The response statusCode should be 200")
 
-		responseRecorder := httptest.NewRecorder()
-		request, requestError := http.NewRequest(http.MethodPost, "/v1/projects", bodyReader)
-		require.NoError(t, requestError, "Error creating the /projects request")
+			rawBody := responseRecorder.Result().Body
+			body, readBodyError := ioutil.ReadAll(rawBody)
+			require.NoError(t, readBodyError)
+			require.Equal(t, string(expectedJsonReponse), string(body), "The response body should be the expected one")
+		})
+	}
 
-		testRouter.ServeHTTP(responseRecorder, request)
-		statusCode := responseRecorder.Result().StatusCode
-		require.Equal(t, http.StatusOK, statusCode, "The response statusCode should be 200")
-
-		rawBody := responseRecorder.Result().Body
-		body, readBodyError := ioutil.ReadAll(rawBody)
-		require.NoError(t, readBodyError)
-		require.Equal(t, string(expectedJsonReponse), string(body), "The response body should be the expected one")
-	})
 }
