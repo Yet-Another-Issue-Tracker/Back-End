@@ -1,7 +1,11 @@
 package routes
 
 import (
+	"bytes"
 	"encoding/json"
+	"io/ioutil"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	log "github.com/sirupsen/logrus"
@@ -90,5 +94,51 @@ func TestCreateProject(testCase *testing.T) {
 }
 
 func TestCreateProjectHandler(testCase *testing.T) {
+	config, err := GetConfig("../.env")
+	if err != nil {
+		log.Fatalf("Error reading env configuration: %s", err.Error())
+		return
+	}
+	testRouter := NewRouter(config)
+	database, err := ConnectDatabase(config)
+	if err != nil {
+		log.Fatalf("Error connecting to database %s", err.Error())
+		return
+	}
 
+	inputProject := Project{
+		Name:   "project-name",
+		Client: "client-name",
+		Type:   "project-type",
+	}
+
+	testCase.Run("/projects - ok", func(t *testing.T) {
+		SetupAndResetDatabase(database)
+
+		expectedResponse := CreateProjectResponse{
+			Id: "1",
+		}
+		expectedJsonReponse, _ := json.Marshal(expectedResponse)
+
+		requestBody, err := json.Marshal(inputProject)
+
+		if err != nil {
+			log.WithField("error", err.Error()).Error("Error marshaling json")
+		}
+
+		bodyReader := bytes.NewReader(requestBody)
+
+		responseRecorder := httptest.NewRecorder()
+		request, requestError := http.NewRequest(http.MethodPost, "/v1/projects", bodyReader)
+		require.NoError(t, requestError, "Error creating the /projects request")
+
+		testRouter.ServeHTTP(responseRecorder, request)
+		statusCode := responseRecorder.Result().StatusCode
+		require.Equal(t, http.StatusOK, statusCode, "The response statusCode should be 200")
+
+		rawBody := responseRecorder.Result().Body
+		body, readBodyError := ioutil.ReadAll(rawBody)
+		require.NoError(t, readBodyError)
+		require.Equal(t, string(expectedJsonReponse), string(body), "The response body should be the expected one")
+	})
 }
