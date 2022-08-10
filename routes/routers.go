@@ -1,10 +1,13 @@
 package routes
 
 import (
+	"fmt"
 	"net/http"
 	"strings"
 
+	"github.com/go-playground/validator/v10"
 	"github.com/gorilla/mux"
+	log "github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 )
 
@@ -42,6 +45,19 @@ func NewRouter(config EnvConfiguration) *mux.Router {
 	}
 
 	return router
+}
+
+func ValidateRequest(inputRequest interface{}) (validationError string) {
+	validate := validator.New()
+	err := validate.Struct(inputRequest)
+	if err != nil {
+		for _, err := range err.(validator.ValidationErrors) {
+			errorMessage := fmt.Sprintf("Validation error, field: %s, tag: %s", err.Namespace(), err.Tag())
+			log.Errorf(errorMessage)
+			validationError = fmt.Sprintf("%s%s", validationError, errorMessage)
+		}
+	}
+	return validationError
 }
 
 var routes = Routes{

@@ -6,7 +6,6 @@ import (
 	"net/http"
 
 	log "github.com/sirupsen/logrus"
-
 	"gorm.io/gorm"
 )
 
@@ -39,6 +38,19 @@ func CreateAddProjectHandler(database *gorm.DB) http.HandlerFunc {
 		if err != nil {
 			log.WithField("error", err.Error()).Error("Error reading request body")
 			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		validationError := ValidateRequest(requestProject)
+
+		if validationError != "" {
+			response := ErrorResponse{
+				ErrorMessage: validationError,
+				ErrorCode:    400,
+			}
+			jsonResponse, _ := json.Marshal(response)
+
+			http.Error(w, string(jsonResponse), http.StatusBadRequest)
 			return
 		}
 
