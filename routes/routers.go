@@ -54,7 +54,11 @@ func ValidateRequest(inputRequest interface{}) (validationError string) {
 		for _, err := range err.(validator.ValidationErrors) {
 			errorMessage := fmt.Sprintf("Validation error, field: %s, tag: %s", err.Namespace(), err.Tag())
 			log.Errorf(errorMessage)
-			validationError = fmt.Sprintf("%s%s", validationError, errorMessage)
+			if validationError == "" {
+				validationError = fmt.Sprintf("%s%s", validationError, errorMessage)
+			} else {
+				validationError = fmt.Sprintf("%s\n%s", validationError, errorMessage)
+			}
 		}
 	}
 	return validationError

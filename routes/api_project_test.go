@@ -186,4 +186,39 @@ func TestCreateProjectHandler(testCase *testing.T) {
 		require.Equal(t, fmt.Sprintf("%s\n", string(expectedJsonReponse)), string(body), "The response body should be the expected one")
 	})
 
+	testCase.Run("/projects - ko - missing name and type", func(t *testing.T) {
+		SetupAndResetDatabase(database)
+		expectedResponse := ErrorResponse{
+			ErrorMessage: "Validation error, field: Project.Name, tag: required\nValidation error, field: Project.Type, tag: required",
+			ErrorCode:    400,
+		}
+
+		expectedJsonReponse, _ := json.Marshal(expectedResponse)
+
+		inputProject := Project{
+			Client: "client-name",
+		}
+
+		requestBody, err := json.Marshal(inputProject)
+
+		if err != nil {
+			log.WithField("error", err.Error()).Error("Error marshaling json")
+		}
+
+		bodyReader := bytes.NewReader(requestBody)
+
+		responseRecorder := httptest.NewRecorder()
+		request, requestError := http.NewRequest(http.MethodPost, "/v1/projects", bodyReader)
+		require.NoError(t, requestError, "Error creating the /projects request")
+
+		testRouter.ServeHTTP(responseRecorder, request)
+		statusCode := responseRecorder.Result().StatusCode
+		require.Equal(t, http.StatusBadRequest, statusCode, "The response statusCode should be 400")
+
+		rawBody := responseRecorder.Result().Body
+		body, readBodyError := ioutil.ReadAll(rawBody)
+		require.NoError(t, readBodyError)
+		require.Equal(t, fmt.Sprintf("%s\n", string(expectedJsonReponse)), string(body), "The response body should be the expected one")
+	})
+
 }
