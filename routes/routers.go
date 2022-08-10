@@ -11,6 +11,8 @@ import (
 	"gorm.io/gorm"
 )
 
+const DUPLICATE_KEY_ERROR = "duplicate key value violates unique constraint"
+
 type ErrorResponse struct {
 	ErrorMessage string
 	ErrorCode    int
@@ -45,6 +47,11 @@ func NewRouter(config EnvConfiguration) *mux.Router {
 	}
 
 	return router
+}
+
+func IsDuplicateKeyError(databaseError error) bool {
+	log.Infof("|||||||||||| %s", databaseError.Error())
+	return strings.Contains(databaseError.Error(), DUPLICATE_KEY_ERROR)
 }
 
 func ValidateRequest(inputRequest interface{}) (validationError string) {

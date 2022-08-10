@@ -62,6 +62,16 @@ func CreateAddProjectHandler(database *gorm.DB) http.HandlerFunc {
 		)
 
 		if err != nil {
+			if IsDuplicateKeyError(err) {
+				response := ErrorResponse{
+					ErrorMessage: fmt.Sprintf("Project with name \"%s\" already exists", requestProject.Name),
+					ErrorCode:    400,
+				}
+				jsonResponse, _ := json.Marshal(response)
+
+				http.Error(w, string(jsonResponse), http.StatusConflict)
+				return
+			}
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}

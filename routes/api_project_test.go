@@ -115,7 +115,7 @@ func TestCreateProjectHandler(testCase *testing.T) {
 		Type:   "project-type",
 	}
 
-	testCase.Run("/projects - ok", func(t *testing.T) {
+	testCase.Run("/projects - 200 - project created", func(t *testing.T) {
 		SetupAndResetDatabase(database)
 
 		expectedResponse := CreateProjectResponse{
@@ -150,7 +150,7 @@ func TestCreateProjectHandler(testCase *testing.T) {
 		require.Equal(t, projectName, foundProject.Name)
 	})
 
-	testCase.Run("/projects - ko - missing name", func(t *testing.T) {
+	testCase.Run("/projects - 400 - missing name", func(t *testing.T) {
 		SetupAndResetDatabase(database)
 		expectedResponse := ErrorResponse{
 			ErrorMessage: "Validation error, field: Project.Name, tag: required",
@@ -186,7 +186,7 @@ func TestCreateProjectHandler(testCase *testing.T) {
 		require.Equal(t, fmt.Sprintf("%s\n", string(expectedJsonReponse)), string(body), "The response body should be the expected one")
 	})
 
-	testCase.Run("/projects - ko - missing name and type", func(t *testing.T) {
+	testCase.Run("/projects - 400 - missing name and type", func(t *testing.T) {
 		SetupAndResetDatabase(database)
 		expectedResponse := ErrorResponse{
 			ErrorMessage: "Validation error, field: Project.Name, tag: required\nValidation error, field: Project.Type, tag: required",
@@ -214,6 +214,39 @@ func TestCreateProjectHandler(testCase *testing.T) {
 		testRouter.ServeHTTP(responseRecorder, request)
 		statusCode := responseRecorder.Result().StatusCode
 		require.Equal(t, http.StatusBadRequest, statusCode, "The response statusCode should be 400")
+
+		rawBody := responseRecorder.Result().Body
+		body, readBodyError := ioutil.ReadAll(rawBody)
+		require.NoError(t, readBodyError)
+		require.Equal(t, fmt.Sprintf("%s\n", string(expectedJsonReponse)), string(body), "The response body should be the expected one")
+	})
+
+	testCase.Run("/projects - 500 - project already exists", func(t *testing.T) {
+		SetupAndResetDatabase(database)
+		database.Create(&inputProject)
+
+		expectedResponse := ErrorResponse{
+			ErrorMessage: fmt.Sprintf("Project with name \"%s\" already exists", projectName),
+			ErrorCode:    400,
+		}
+
+		expectedJsonReponse, _ := json.Marshal(expectedResponse)
+
+		requestBody, err := json.Marshal(inputProject)
+
+		if err != nil {
+			log.WithField("error", err.Error()).Error("Error marshaling json")
+		}
+
+		bodyReader := bytes.NewReader(requestBody)
+
+		responseRecorder := httptest.NewRecorder()
+		request, requestError := http.NewRequest(http.MethodPost, "/v1/projects", bodyReader)
+		require.NoError(t, requestError, "Error creating the /projects request")
+
+		testRouter.ServeHTTP(responseRecorder, request)
+		statusCode := responseRecorder.Result().StatusCode
+		require.Equal(t, http.StatusConflict, statusCode, "The response statusCode should be 409")
 
 		rawBody := responseRecorder.Result().Body
 		body, readBodyError := ioutil.ReadAll(rawBody)
