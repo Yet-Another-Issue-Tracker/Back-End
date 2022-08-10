@@ -34,7 +34,20 @@ func CreateAddProjectHandler(database *gorm.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 
-		projectId, err := createProject(database, "", "", "")
+		var requestProject Project
+		err := json.NewDecoder(r.Body).Decode(&requestProject)
+		if err != nil {
+			log.WithField("error", err.Error()).Error("Error reading request body")
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		projectId, err := createProject(
+			database,
+			requestProject.Name,
+			requestProject.Type,
+			requestProject.Client,
+		)
 
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)

@@ -8,6 +8,10 @@ import (
 	"gorm.io/gorm"
 )
 
+type ErrorResponse struct {
+	ErrorMessage string
+	ErrorCode    int
+}
 type Route struct {
 	Name        string
 	Method      string
