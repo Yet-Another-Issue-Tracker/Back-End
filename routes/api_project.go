@@ -10,7 +10,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func createProject(database *gorm.DB, projectName string, projectType string, projectClient string) ([]byte, error) {
+func createProject(database *gorm.DB, projectName string, projectType string, projectClient string) (uint, error) {
 	project := Project{Name: projectName, Client: projectClient, Type: projectType}
 
 	result := database.Create(&project)
@@ -18,29 +18,19 @@ func createProject(database *gorm.DB, projectName string, projectType string, pr
 	if result.Error != nil {
 		log.WithField("error", result.Error.Error()).Error("Error creating new project")
 		if IsDuplicateKeyError(result.Error) {
-			return nil, &ErrorResponse{
+			return 0, &ErrorResponse{
 				ErrorMessage: fmt.Sprintf("Project with name \"%s\" already exists", projectName),
 				ErrorCode:    409,
 			}
 		}
-		return nil, &ErrorResponse{
+		return 0, &ErrorResponse{
 			ErrorMessage: result.Error.Error(),
 			ErrorCode:    500,
 		}
 
 	}
 
-	response := CreateProjectResponse{Id: fmt.Sprint(project.ID)}
-
-	responseBody, err := json.Marshal(response)
-	if err != nil {
-		return nil, &ErrorResponse{
-			ErrorMessage: "Error marshaling the response",
-			ErrorCode:    500,
-		}
-	}
-
-	return responseBody, nil
+	return project.ID, nil
 }
 
 func CreateAddProjectHandler(database *gorm.DB) http.HandlerFunc {
@@ -85,6 +75,21 @@ func CreateAddProjectHandler(database *gorm.DB) http.HandlerFunc {
 			return
 		}
 
-		w.Write(projectId)
+		response := CreateProjectResponse{Id: fmt.Sprint(projectId)}
+
+		responseBody, err := json.Marshal(response)
+		if err != nil {
+			log.WithField("error", err.Error()).Error("Error marshaling the response")
+			response := ErrorResponse{
+				ErrorMessage: "Error mashaling the response",
+				ErrorCode:    500,
+			}
+			jsonResponse, _ := json.Marshal(response)
+
+			http.Error(w, string(jsonResponse), http.StatusBadRequest)
+			return
+		}
+
+		w.Write(responseBody)
 	}
 }
