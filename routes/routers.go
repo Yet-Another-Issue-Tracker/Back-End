@@ -19,6 +19,11 @@ type ErrorResponse struct {
 	ErrorMessage string
 	ErrorCode    int
 }
+
+func (err ErrorResponse) Error() string {
+	return err.ErrorMessage
+}
+
 type Route struct {
 	Name        string
 	Method      string

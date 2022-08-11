@@ -2,6 +2,7 @@ package routes
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -16,14 +17,27 @@ func createProject(database *gorm.DB, projectName string, projectType string, pr
 
 	if result.Error != nil {
 		log.WithField("error", result.Error.Error()).Error("Error creating new project")
-		return nil, result.Error
+		if IsDuplicateKeyError(result.Error) {
+			return nil, &ErrorResponse{
+				ErrorMessage: fmt.Sprintf("Project with name \"%s\" already exists", projectName),
+				ErrorCode:    409,
+			}
+		}
+		return nil, &ErrorResponse{
+			ErrorMessage: result.Error.Error(),
+			ErrorCode:    500,
+		}
+
 	}
 
 	response := CreateProjectResponse{Id: fmt.Sprint(project.ID)}
 
 	responseBody, err := json.Marshal(response)
 	if err != nil {
-		return nil, err
+		return nil, &ErrorResponse{
+			ErrorMessage: "Error marshaling the response",
+			ErrorCode:    500,
+		}
 	}
 
 	return responseBody, nil
@@ -62,17 +76,12 @@ func CreateAddProjectHandler(database *gorm.DB) http.HandlerFunc {
 		)
 
 		if err != nil {
-			if IsDuplicateKeyError(err) {
-				response := ErrorResponse{
-					ErrorMessage: fmt.Sprintf("Project with name \"%s\" already exists", requestProject.Name),
-					ErrorCode:    400,
-				}
-				jsonResponse, _ := json.Marshal(response)
+			var errorResponse *ErrorResponse
+			errors.As(err, &errorResponse)
 
-				http.Error(w, string(jsonResponse), http.StatusConflict)
-				return
-			}
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			jsonResponse, _ := json.Marshal(err)
+
+			http.Error(w, string(jsonResponse), errorResponse.ErrorCode)
 			return
 		}
 
