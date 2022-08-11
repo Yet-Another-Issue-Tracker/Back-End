@@ -64,11 +64,9 @@ func IsDuplicateKeyError(databaseError error) bool {
 
 func ReturnErrorResponse(err error, w http.ResponseWriter) {
 	var errorResponse *ErrorResponse
-	value := errors.As(err, &errorResponse)
-	fmt.Printf("||||||||||||| value: %t\n\n", value)
+	errors.As(err, &errorResponse)
 
 	jsonResponse, _ := json.Marshal(err)
-	fmt.Printf("||||ghjkl||||||||| %d\n\n", errorResponse.ErrorCode)
 
 	http.Error(w, string(jsonResponse), errorResponse.ErrorCode)
 }

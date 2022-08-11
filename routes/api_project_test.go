@@ -148,6 +148,45 @@ func TestCreateProjectHandler(testCase *testing.T) {
 		require.Equal(t, projectName, foundProject.Name)
 	})
 
+	testCase.Run("/projects - 400 - request has wrong types", func(t *testing.T) {
+		SetupAndResetDatabase(database)
+		expectedResponse := ErrorResponse{
+			ErrorMessage: "Error reading request body",
+			ErrorCode:    400,
+		}
+
+		expectedJsonReponse, _ := json.Marshal(expectedResponse)
+
+		type WrongProject struct {
+			Name bool
+		}
+
+		inputProject := WrongProject{
+			Name: true,
+		}
+
+		requestBody, err := json.Marshal(inputProject)
+
+		if err != nil {
+			log.WithField("error", err.Error()).Error("Error marshaling json")
+		}
+
+		bodyReader := bytes.NewReader(requestBody)
+
+		responseRecorder := httptest.NewRecorder()
+		request, requestError := http.NewRequest(http.MethodPost, "/v1/projects", bodyReader)
+		require.NoError(t, requestError, "Error creating the /projects request")
+
+		testRouter.ServeHTTP(responseRecorder, request)
+		statusCode := responseRecorder.Result().StatusCode
+		require.Equal(t, expectedResponse.ErrorCode, statusCode, "The response statusCode should be 500")
+
+		rawBody := responseRecorder.Result().Body
+		body, readBodyError := ioutil.ReadAll(rawBody)
+		require.NoError(t, readBodyError)
+		require.Equal(t, fmt.Sprintf("%s\n", string(expectedJsonReponse)), string(body), "The response body should be the expected one")
+	})
+
 	testCase.Run("/projects - 400 - missing name", func(t *testing.T) {
 		SetupAndResetDatabase(database)
 		expectedResponse := ErrorResponse{
@@ -176,7 +215,7 @@ func TestCreateProjectHandler(testCase *testing.T) {
 
 		testRouter.ServeHTTP(responseRecorder, request)
 		statusCode := responseRecorder.Result().StatusCode
-		require.Equal(t, http.StatusBadRequest, statusCode, "The response statusCode should be 400")
+		require.Equal(t, expectedResponse.ErrorCode, statusCode, "The response statusCode should be 400")
 
 		rawBody := responseRecorder.Result().Body
 		body, readBodyError := ioutil.ReadAll(rawBody)
@@ -211,7 +250,7 @@ func TestCreateProjectHandler(testCase *testing.T) {
 
 		testRouter.ServeHTTP(responseRecorder, request)
 		statusCode := responseRecorder.Result().StatusCode
-		require.Equal(t, http.StatusBadRequest, statusCode, "The response statusCode should be 400")
+		require.Equal(t, expectedResponse.ErrorCode, statusCode, "The response statusCode should be 400")
 
 		rawBody := responseRecorder.Result().Body
 		body, readBodyError := ioutil.ReadAll(rawBody)
@@ -244,7 +283,7 @@ func TestCreateProjectHandler(testCase *testing.T) {
 
 		testRouter.ServeHTTP(responseRecorder, request)
 		statusCode := responseRecorder.Result().StatusCode
-		require.Equal(t, http.StatusConflict, statusCode, "The response statusCode should be 409")
+		require.Equal(t, expectedResponse.ErrorCode, statusCode, "The response statusCode should be 409")
 
 		rawBody := responseRecorder.Result().Body
 		body, readBodyError := ioutil.ReadAll(rawBody)

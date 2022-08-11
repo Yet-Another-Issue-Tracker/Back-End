@@ -39,7 +39,7 @@ func getProjectFromRequestBody(r *http.Request) (Project, error) {
 		log.WithField("error", err.Error()).Error("Error reading request body")
 		return Project{}, &ErrorResponse{
 			ErrorMessage: "Error reading request body",
-			ErrorCode:    500,
+			ErrorCode:    400,
 		}
 	}
 	return requestProject, nil
