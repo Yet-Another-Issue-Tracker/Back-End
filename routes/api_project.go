@@ -37,7 +37,7 @@ func getProjectFromRequestBody(r *http.Request) (Project, error) {
 	err := json.NewDecoder(r.Body).Decode(&requestProject)
 	if err != nil {
 		log.WithField("error", err.Error()).Error("Error reading request body")
-		return Project{}, ErrorResponse{
+		return Project{}, &ErrorResponse{
 			ErrorMessage: "Error reading request body",
 			ErrorCode:    500,
 		}
@@ -50,7 +50,7 @@ func getResponseBody(projectId uint) ([]byte, error) {
 	responseBody, err := json.Marshal(response)
 	if err != nil {
 		log.WithField("error", err.Error()).Error("Error marshaling the response")
-		return []byte{}, ErrorResponse{
+		return []byte{}, &ErrorResponse{
 			ErrorMessage: "Error mashaling the response",
 			ErrorCode:    500,
 		}
@@ -69,9 +69,8 @@ func CreateAddProjectHandler(database *gorm.DB) http.HandlerFunc {
 		}
 
 		validationErr := ValidateRequest(requestProject)
-
 		if validationErr != nil {
-			ReturnErrorResponse(err, w)
+			ReturnErrorResponse(validationErr, w)
 			return
 		}
 
@@ -81,7 +80,6 @@ func CreateAddProjectHandler(database *gorm.DB) http.HandlerFunc {
 			requestProject.Type,
 			requestProject.Client,
 		)
-
 		if err != nil {
 			ReturnErrorResponse(err, w)
 			return

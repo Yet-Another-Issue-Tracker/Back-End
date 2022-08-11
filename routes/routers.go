@@ -64,15 +64,17 @@ func IsDuplicateKeyError(databaseError error) bool {
 
 func ReturnErrorResponse(err error, w http.ResponseWriter) {
 	var errorResponse *ErrorResponse
-	errors.As(err, &errorResponse)
+	value := errors.As(err, &errorResponse)
+	fmt.Printf("||||||||||||| value: %t\n\n", value)
 
 	jsonResponse, _ := json.Marshal(err)
+	fmt.Printf("||||ghjkl||||||||| %d\n\n", errorResponse.ErrorCode)
 
 	http.Error(w, string(jsonResponse), errorResponse.ErrorCode)
 }
 
 func ValidateRequest(inputRequest interface{}) error {
-	var validationError = ""
+	var validationError string = ""
 	validate := validator.New()
 	err := validate.Struct(inputRequest)
 	if err != nil {
@@ -84,7 +86,8 @@ func ValidateRequest(inputRequest interface{}) error {
 				validationError = fmt.Sprintf("%s\n%s", validationError, errorMessage)
 			}
 		}
-		return ErrorResponse{
+
+		return &ErrorResponse{
 			ErrorMessage: validationError,
 			ErrorCode:    400,
 		}

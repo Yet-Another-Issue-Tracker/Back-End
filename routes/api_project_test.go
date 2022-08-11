@@ -26,9 +26,7 @@ func TestCreateProject(testCase *testing.T) {
 		log.Fatalf("Error connecting to database %s", err.Error())
 		return
 	}
-	expectedResponse := CreateProjectResponse{
-		Id: "1",
-	}
+	expectedResponse := 1
 	expectedJsonReponse, _ := json.Marshal(expectedResponse)
 
 	testCase.Run("createProject return the new id", func(t *testing.T) {
@@ -41,7 +39,7 @@ func TestCreateProject(testCase *testing.T) {
 		database.First(&foundProject)
 
 		require.Equal(t, nil, err)
-		require.Equal(t, string(expectedJsonReponse), string(response))
+		require.Equal(t, string(expectedJsonReponse), fmt.Sprint(response))
 	})
 
 	testCase.Run("createProject with specific name and type", func(t *testing.T) {
@@ -78,7 +76,7 @@ func TestCreateProject(testCase *testing.T) {
 
 	testCase.Run("createProject returns error if project with same name already exits", func(t *testing.T) {
 		SetupAndResetDatabase(database)
-		expectedError := "ERROR: duplicate key value violates unique constraint \"idx_projects_name\" (SQLSTATE 23505)"
+		expectedError := "Project with name \"project-name\" already exists"
 
 		expectedProjectName := "project-name"
 		expectedType := "project-type"
@@ -227,7 +225,7 @@ func TestCreateProjectHandler(testCase *testing.T) {
 
 		expectedResponse := ErrorResponse{
 			ErrorMessage: fmt.Sprintf("Project with name \"%s\" already exists", projectName),
-			ErrorCode:    400,
+			ErrorCode:    409,
 		}
 
 		expectedJsonReponse, _ := json.Marshal(expectedResponse)
