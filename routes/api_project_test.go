@@ -292,3 +292,42 @@ func TestCreateProjectHandler(testCase *testing.T) {
 	})
 
 }
+
+func TestGetProjects(testCase *testing.T) {
+	config, err := GetConfig("../.env")
+	if err != nil {
+		log.Fatalf("Error reading env configuration: %s", err.Error())
+		return
+	}
+	database, err := ConnectDatabase(config)
+
+	if err != nil {
+		log.Fatalf("Error connecting to database %s", err.Error())
+		return
+	}
+
+	testCase.Run("getProjects return a list of projects", func(t *testing.T) {
+		SetupAndResetDatabase(database)
+		expectedProjectName := "project-name"
+		expectedType := "project-type"
+		expectedClient := "project-client"
+
+		createProject(database, expectedProjectName, expectedType, expectedClient)
+
+		expectedResponse := []Project{
+			{
+				Name:   expectedProjectName,
+				Type:   expectedType,
+				Client: expectedClient,
+			},
+		}
+
+		foundProjects, err := getProjects(database)
+
+		require.Equal(t, nil, err)
+		require.Equal(t, expectedResponse[0].Name, foundProjects[0].Name)
+		require.Equal(t, expectedResponse[0].Type, foundProjects[0].Type)
+		require.Equal(t, expectedResponse[0].Client, foundProjects[0].Client)
+		require.Equal(t, uint(1), foundProjects[0].ID)
+	})
+}

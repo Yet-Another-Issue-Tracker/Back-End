@@ -9,6 +9,18 @@ import (
 	"gorm.io/gorm"
 )
 
+func getProjects(database *gorm.DB) ([]Project, error) {
+	var projects []Project
+	result := database.Find(&projects)
+	if result.Error != nil {
+		log.WithField("error", result.Error.Error()).Error("Error retrieving projects")
+		return []Project{}, &ErrorResponse{
+			ErrorMessage: "Error retrieving projects",
+			ErrorCode:    500,
+		}
+	}
+	return projects, nil
+}
 func createProject(database *gorm.DB, projectName string, projectType string, projectClient string) (uint, error) {
 	project := Project{Name: projectName, Client: projectClient, Type: projectType}
 
