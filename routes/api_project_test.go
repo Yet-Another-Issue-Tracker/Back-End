@@ -221,7 +221,7 @@ func TestCreateProjectHandler(testCase *testing.T) {
 		require.Equal(t, fmt.Sprintf("%s\n", string(expectedJsonReponse)), string(body), "The response body should be the expected one")
 	})
 
-	testCase.Run("/projects - 500 - project already exists", func(t *testing.T) {
+	testCase.Run("/projects - 409 - project already exists", func(t *testing.T) {
 		SetupAndResetDatabase(database)
 		database.Create(&inputProject)
 

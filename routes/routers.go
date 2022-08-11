@@ -2,12 +2,14 @@ package routes
 
 import (
 	"fmt"
+	"math/rand"
 	"net/http"
 	"strings"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
+	"github.com/urfave/negroni"
 	"gorm.io/gorm"
 )
 
@@ -26,12 +28,22 @@ type Route struct {
 
 type Routes []Route
 
-func NewRouter(config EnvConfiguration) *mux.Router {
+func Validator(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
+	if rand.Int31n(100) <= 50 {
+		fmt.Fprintf(w, "hello from RandomMiddleware")
+	} else {
+		next(w, r)
+	}
+}
+
+func NewRouter(config EnvConfiguration) *negroni.Negroni {
 	router := mux.NewRouter().StrictSlash(true)
+	nRouter := negroni.New(negroni.NewRecovery())
+
 	db, err := ConnectDatabase(config)
 
 	if err != nil {
-		return &mux.Router{}
+		return &negroni.Negroni{}
 	}
 
 	for _, route := range routes {
@@ -45,12 +57,11 @@ func NewRouter(config EnvConfiguration) *mux.Router {
 			Name(route.Name).
 			Handler(handler)
 	}
-
-	return router
+	nRouter.UseHandler(router)
+	return nRouter
 }
 
 func IsDuplicateKeyError(databaseError error) bool {
-	log.Infof("|||||||||||| %s", databaseError.Error())
 	return strings.Contains(databaseError.Error(), DUPLICATE_KEY_ERROR)
 }
 
