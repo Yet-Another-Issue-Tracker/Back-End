@@ -33,28 +33,56 @@ func createProject(database *gorm.DB, projectName string, projectType string, pr
 	return project.ID, nil
 }
 
+func getProjectFromRequestBody(r *http.Request) (Project, error) {
+	var requestProject Project
+	err := json.NewDecoder(r.Body).Decode(&requestProject)
+	if err != nil {
+		log.WithField("error", err.Error()).Error("Error reading request body")
+		return Project{}, ErrorResponse{
+			ErrorMessage: "Error reading request body",
+			ErrorCode:    500,
+		}
+	}
+	return requestProject, nil
+}
+func getResponseBody(projectId uint) ([]byte, error) {
+	response := CreateProjectResponse{Id: fmt.Sprint(projectId)}
+
+	responseBody, err := json.Marshal(response)
+	if err != nil {
+		log.WithField("error", err.Error()).Error("Error marshaling the response")
+		return []byte{}, ErrorResponse{
+			ErrorMessage: "Error mashaling the response",
+			ErrorCode:    500,
+		}
+	}
+	return responseBody, nil
+}
+
 func CreateAddProjectHandler(database *gorm.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 
-		var requestProject Project
-		err := json.NewDecoder(r.Body).Decode(&requestProject)
+		requestProject, err := getProjectFromRequestBody(r)
 		if err != nil {
-			log.WithField("error", err.Error()).Error("Error reading request body")
-			http.Error(w, err.Error(), http.StatusBadRequest)
+			var errorResponse *ErrorResponse
+			errors.As(err, &errorResponse)
+
+			jsonResponse, _ := json.Marshal(err)
+
+			http.Error(w, string(jsonResponse), errorResponse.ErrorCode)
 			return
 		}
 
-		validationError := ValidateRequest(requestProject)
+		validationErr := ValidateRequest(requestProject)
 
-		if validationError != "" {
-			response := ErrorResponse{
-				ErrorMessage: validationError,
-				ErrorCode:    400,
-			}
-			jsonResponse, _ := json.Marshal(response)
+		if validationErr != nil {
+			var errorResponse *ErrorResponse
+			errors.As(validationErr, &errorResponse)
 
-			http.Error(w, string(jsonResponse), http.StatusBadRequest)
+			jsonResponse, _ := json.Marshal(err)
+
+			http.Error(w, string(jsonResponse), errorResponse.ErrorCode)
 			return
 		}
 
@@ -75,21 +103,17 @@ func CreateAddProjectHandler(database *gorm.DB) http.HandlerFunc {
 			return
 		}
 
-		response := CreateProjectResponse{Id: fmt.Sprint(projectId)}
-
-		responseBody, err := json.Marshal(response)
+		response, err := getResponseBody(projectId)
 		if err != nil {
-			log.WithField("error", err.Error()).Error("Error marshaling the response")
-			response := ErrorResponse{
-				ErrorMessage: "Error mashaling the response",
-				ErrorCode:    500,
-			}
-			jsonResponse, _ := json.Marshal(response)
+			var errorResponse *ErrorResponse
+			errors.As(err, &errorResponse)
 
-			http.Error(w, string(jsonResponse), http.StatusBadRequest)
+			jsonResponse, _ := json.Marshal(err)
+
+			http.Error(w, string(jsonResponse), errorResponse.ErrorCode)
 			return
 		}
 
-		w.Write(responseBody)
+		w.Write(response)
 	}
 }

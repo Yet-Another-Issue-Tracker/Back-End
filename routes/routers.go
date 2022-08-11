@@ -2,13 +2,11 @@ package routes
 
 import (
 	"fmt"
-	"math/rand"
 	"net/http"
 	"strings"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gorilla/mux"
-	log "github.com/sirupsen/logrus"
 	"github.com/urfave/negroni"
 	"gorm.io/gorm"
 )
@@ -32,14 +30,6 @@ type Route struct {
 }
 
 type Routes []Route
-
-func Validator(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
-	if rand.Int31n(100) <= 50 {
-		fmt.Fprintf(w, "hello from RandomMiddleware")
-	} else {
-		next(w, r)
-	}
-}
 
 func NewRouter(config EnvConfiguration) *negroni.Negroni {
 	router := mux.NewRouter().StrictSlash(true)
@@ -70,21 +60,25 @@ func IsDuplicateKeyError(databaseError error) bool {
 	return strings.Contains(databaseError.Error(), DUPLICATE_KEY_ERROR)
 }
 
-func ValidateRequest(inputRequest interface{}) (validationError string) {
+func ValidateRequest(inputRequest interface{}) error {
+	var validationError = ""
 	validate := validator.New()
 	err := validate.Struct(inputRequest)
 	if err != nil {
 		for _, err := range err.(validator.ValidationErrors) {
 			errorMessage := fmt.Sprintf("Validation error, field: %s, tag: %s", err.Namespace(), err.Tag())
-			log.Errorf(errorMessage)
 			if validationError == "" {
 				validationError = fmt.Sprintf("%s%s", validationError, errorMessage)
 			} else {
 				validationError = fmt.Sprintf("%s\n%s", validationError, errorMessage)
 			}
 		}
+		return ErrorResponse{
+			ErrorMessage: validationError,
+			ErrorCode:    400,
+		}
 	}
-	return validationError
+	return nil
 }
 
 var routes = Routes{
