@@ -2,7 +2,6 @@ package routes
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
 
@@ -65,24 +64,14 @@ func CreateAddProjectHandler(database *gorm.DB) http.HandlerFunc {
 
 		requestProject, err := getProjectFromRequestBody(r)
 		if err != nil {
-			var errorResponse *ErrorResponse
-			errors.As(err, &errorResponse)
-
-			jsonResponse, _ := json.Marshal(err)
-
-			http.Error(w, string(jsonResponse), errorResponse.ErrorCode)
+			ReturnErrorResponse(err, w)
 			return
 		}
 
 		validationErr := ValidateRequest(requestProject)
 
 		if validationErr != nil {
-			var errorResponse *ErrorResponse
-			errors.As(validationErr, &errorResponse)
-
-			jsonResponse, _ := json.Marshal(err)
-
-			http.Error(w, string(jsonResponse), errorResponse.ErrorCode)
+			ReturnErrorResponse(err, w)
 			return
 		}
 
@@ -94,23 +83,13 @@ func CreateAddProjectHandler(database *gorm.DB) http.HandlerFunc {
 		)
 
 		if err != nil {
-			var errorResponse *ErrorResponse
-			errors.As(err, &errorResponse)
-
-			jsonResponse, _ := json.Marshal(err)
-
-			http.Error(w, string(jsonResponse), errorResponse.ErrorCode)
+			ReturnErrorResponse(err, w)
 			return
 		}
 
 		response, err := getResponseBody(projectId)
 		if err != nil {
-			var errorResponse *ErrorResponse
-			errors.As(err, &errorResponse)
-
-			jsonResponse, _ := json.Marshal(err)
-
-			http.Error(w, string(jsonResponse), errorResponse.ErrorCode)
+			ReturnErrorResponse(err, w)
 			return
 		}
 

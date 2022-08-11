@@ -1,6 +1,8 @@
 package routes
 
 import (
+	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -58,6 +60,15 @@ func NewRouter(config EnvConfiguration) *negroni.Negroni {
 
 func IsDuplicateKeyError(databaseError error) bool {
 	return strings.Contains(databaseError.Error(), DUPLICATE_KEY_ERROR)
+}
+
+func ReturnErrorResponse(err error, w http.ResponseWriter) {
+	var errorResponse *ErrorResponse
+	errors.As(err, &errorResponse)
+
+	jsonResponse, _ := json.Marshal(err)
+
+	http.Error(w, string(jsonResponse), errorResponse.ErrorCode)
 }
 
 func ValidateRequest(inputRequest interface{}) error {
