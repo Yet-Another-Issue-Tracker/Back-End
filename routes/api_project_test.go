@@ -290,7 +290,6 @@ func TestCreateProjectHandler(testCase *testing.T) {
 		require.NoError(t, readBodyError)
 		require.Equal(t, fmt.Sprintf("%s\n", string(expectedJsonReponse)), string(body), "The response body should be the expected one")
 	})
-
 }
 
 func TestGetProjects(testCase *testing.T) {
@@ -329,5 +328,83 @@ func TestGetProjects(testCase *testing.T) {
 		require.Equal(t, expectedResponse[0].Type, foundProjects[0].Type)
 		require.Equal(t, expectedResponse[0].Client, foundProjects[0].Client)
 		require.Equal(t, uint(1), foundProjects[0].ID)
+	})
+}
+func assertProjectsEquality(t *testing.T, expected []byte, actual []byte) {
+	var expectedProjects []Project
+	json.Unmarshal(expected, &expectedProjects)
+
+	var actualProjects []Project
+	json.Unmarshal(actual, &actualProjects)
+
+	for index, expectedProject := range expectedProjects {
+		require.Equal(t, expectedProject.Name, actualProjects[index].Name)
+		require.Equal(t, expectedProject.Type, actualProjects[index].Type)
+		require.Equal(t, expectedProject.Client, actualProjects[index].Client)
+		require.Equal(t, expectedProject.ID, actualProjects[index].ID)
+	}
+
+}
+func TestGetProjectsHandler(testCase *testing.T) {
+	config, err := GetConfig("../.env")
+	if err != nil {
+		log.Fatalf("Error reading env configuration: %s", err.Error())
+		return
+	}
+	testRouter := NewRouter(config)
+	database, err := ConnectDatabase(config)
+	if err != nil {
+		log.Fatalf("Error connecting to database %s", err.Error())
+		return
+	}
+
+	projectName := "project-name"
+
+	inputProject := Project{
+		Name:   projectName,
+		Client: "client-name",
+		Type:   "project-type",
+	}
+
+	testCase.Run("/projects - 200 - project created", func(t *testing.T) {
+		SetupAndResetDatabase(database)
+		expectedProjectName := "project-name"
+		expectedType := "project-type"
+		expectedClient := "project-client"
+
+		createProject(database, expectedProjectName, expectedType, expectedClient)
+
+		expectedResponse := []Project{
+			{
+				ID:     1,
+				Name:   expectedProjectName,
+				Type:   expectedType,
+				Client: expectedClient,
+			},
+		}
+
+		expectedJsonReponse, _ := json.Marshal(expectedResponse)
+
+		requestBody, err := json.Marshal(inputProject)
+
+		if err != nil {
+			log.WithField("error", err.Error()).Error("Error marshaling json")
+		}
+
+		bodyReader := bytes.NewReader(requestBody)
+
+		responseRecorder := httptest.NewRecorder()
+		request, requestError := http.NewRequest(http.MethodGet, "/v1/projects", bodyReader)
+		require.NoError(t, requestError, "Error creating the /projects request")
+
+		testRouter.ServeHTTP(responseRecorder, request)
+		statusCode := responseRecorder.Result().StatusCode
+		require.Equal(t, http.StatusOK, statusCode, "The response statusCode should be 200")
+
+		rawBody := responseRecorder.Result().Body
+		body, readBodyError := ioutil.ReadAll(rawBody)
+		require.NoError(t, readBodyError)
+
+		assertProjectsEquality(t, expectedJsonReponse, body)
 	})
 }

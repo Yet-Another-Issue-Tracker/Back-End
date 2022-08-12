@@ -144,6 +144,13 @@ var routes = Routes{
 	},
 
 	Route{
+		"AddProject",
+		strings.ToUpper("Get"),
+		"/v1/projects",
+		CreateGetProjectsHandler,
+	},
+
+	Route{
 		"AddSprint",
 		strings.ToUpper("Post"),
 		"/v1/projects/{projectId}/sprints",

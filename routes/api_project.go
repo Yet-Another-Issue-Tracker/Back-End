@@ -56,7 +56,7 @@ func getProjectFromRequestBody(r *http.Request) (Project, error) {
 	}
 	return requestProject, nil
 }
-func getResponseBody(projectId uint) ([]byte, error) {
+func getCreateProjectResponseBody(projectId uint) ([]byte, error) {
 	response := CreateProjectResponse{Id: fmt.Sprint(projectId)}
 
 	responseBody, err := json.Marshal(response)
@@ -97,12 +97,34 @@ func CreateAddProjectHandler(database *gorm.DB) http.HandlerFunc {
 			return
 		}
 
-		response, err := getResponseBody(projectId)
+		response, err := getCreateProjectResponseBody(projectId)
 		if err != nil {
 			ReturnErrorResponse(err, w)
 			return
 		}
 
+		w.Write(response)
+	}
+}
+
+func CreateGetProjectsHandler(database *gorm.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+
+		projects, err := getProjects(database)
+		if err != nil {
+			ReturnErrorResponse(err, w)
+			return
+		}
+		response, err := json.Marshal(projects)
+		if err != nil {
+			log.WithField("error", err.Error()).Error("Error marshaling the response")
+			ReturnErrorResponse(&ErrorResponse{
+				ErrorMessage: "Error mashaling the response",
+				ErrorCode:    500,
+			}, w)
+			return
+		}
 		w.Write(response)
 	}
 }
