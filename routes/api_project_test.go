@@ -358,15 +358,7 @@ func TestGetProjectsHandler(testCase *testing.T) {
 		return
 	}
 
-	projectName := "project-name"
-
-	inputProject := Project{
-		Name:   projectName,
-		Client: "client-name",
-		Type:   "project-type",
-	}
-
-	testCase.Run("/projects - 200 - project created", func(t *testing.T) {
+	testCase.Run("/projects - 200 - returned list of projects", func(t *testing.T) {
 		SetupAndResetDatabase(database)
 		expectedProjectName := "project-name"
 		expectedType := "project-type"
@@ -385,16 +377,12 @@ func TestGetProjectsHandler(testCase *testing.T) {
 
 		expectedJsonReponse, _ := json.Marshal(expectedResponse)
 
-		requestBody, err := json.Marshal(inputProject)
-
 		if err != nil {
 			log.WithField("error", err.Error()).Error("Error marshaling json")
 		}
 
-		bodyReader := bytes.NewReader(requestBody)
-
 		responseRecorder := httptest.NewRecorder()
-		request, requestError := http.NewRequest(http.MethodGet, "/v1/projects", bodyReader)
+		request, requestError := http.NewRequest(http.MethodGet, "/v1/projects", nil)
 		require.NoError(t, requestError, "Error creating the /projects request")
 
 		testRouter.ServeHTTP(responseRecorder, request)
