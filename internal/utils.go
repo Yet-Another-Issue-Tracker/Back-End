@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"issue-service/app/service-api/cfg"
-	models "issue-service/app/service-api/routes/makes/models"
+	"issue-service/app/issue-api/cfg"
+	models "issue-service/app/issue-api/routes/makes/models"
 	"log"
 	"net/http"
 

@@ -3,7 +3,7 @@ package routes
 import (
 	"encoding/json"
 	"fmt"
-	"issue-service/app/service-api/routes/makes/models"
+	"issue-service/app/issue-api/routes/makes/models"
 	"issue-service/internal"
 	"net/http"
 

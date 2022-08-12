@@ -2,8 +2,8 @@ package main
 
 import (
 	"fmt"
-	"issue-service/app/service-api/cfg"
-	"issue-service/app/service-api/webserver"
+	"issue-service/app/issue-api/cfg"
+	"issue-service/app/issue-api/webserver"
 	"net/http"
 	"os"
 

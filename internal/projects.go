@@ -3,7 +3,7 @@ package internal
 import (
 	"fmt"
 
-	models "issue-service/app/service-api/routes/makes/models"
+	models "issue-service/app/issue-api/routes/makes/models"
 
 	log "github.com/sirupsen/logrus"
 	"gorm.io/gorm"

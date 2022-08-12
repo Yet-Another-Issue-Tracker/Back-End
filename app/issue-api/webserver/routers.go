@@ -1,9 +1,9 @@
 package webserver
 
 import (
-	"issue-service/app/service-api/cfg"
-	"issue-service/app/service-api/routes"
-	"issue-service/app/service-api/routes/makes/models"
+	"issue-service/app/issue-api/cfg"
+	"issue-service/app/issue-api/routes"
+	"issue-service/app/issue-api/routes/makes/models"
 	"issue-service/internal"
 	"net/http"
 	"strings"
