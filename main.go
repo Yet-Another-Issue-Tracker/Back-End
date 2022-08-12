@@ -2,7 +2,8 @@ package main
 
 import (
 	"fmt"
-	routes "issue-service/routes"
+	"issue-service/app/service-api/cfg"
+	"issue-service/app/service-api/webserver"
 	"net/http"
 	"os"
 
@@ -48,14 +49,14 @@ func main() {
 		return
 	}
 
-	var config routes.EnvConfiguration
+	var config cfg.EnvConfiguration
 
 	if err := viper.Unmarshal(&config); err != nil {
 		log.WithField("error", err.Error()).Fatal("Error unmarshaling env configuration")
 		return
 	}
 	initLogging(config.LOG_LEVEL)
-	router := routes.NewRouter(config)
+	router := webserver.NewRouter(config)
 
 	log.Info(fmt.Sprintf("Server starting on port: %s", config.HTTP_PORT))
 

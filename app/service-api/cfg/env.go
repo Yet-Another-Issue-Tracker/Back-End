@@ -1,4 +1,4 @@
-package routes
+package cfg
 
 type EnvConfiguration struct {
 	HTTP_PORT         string

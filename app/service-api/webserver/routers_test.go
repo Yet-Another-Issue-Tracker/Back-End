@@ -1,8 +1,9 @@
-package routes
+package webserver
 
 import (
 	"fmt"
 	"io/ioutil"
+	"issue-service/internal"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -14,7 +15,7 @@ import (
 func TestStatusRoutes(testCase *testing.T) {
 	serviceName := "issue-service"
 	serviceVersion := "1.0.0"
-	config, err := GetConfig("../.env")
+	config, err := internal.GetConfig("../../../.env")
 	if err != nil {
 		log.Fatalf("Error reading env configuration: %s", err.Error())
 		return

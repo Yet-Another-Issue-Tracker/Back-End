@@ -5,101 +5,72 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"issue-service/app/service-api/cfg"
+	"issue-service/app/service-api/routes/makes/models"
+	"issue-service/internal"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
+	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
+	"github.com/urfave/negroni"
 
 	"github.com/stretchr/testify/require"
 )
 
-func TestCreateProject(testCase *testing.T) {
-	config, err := GetConfig("../.env")
-	if err != nil {
-		log.Fatalf("Error reading env configuration: %s", err.Error())
-		return
-	}
-	database, err := ConnectDatabase(config)
+func newRouter(config cfg.EnvConfiguration) *negroni.Negroni {
+	router := mux.NewRouter().StrictSlash(true)
+	nRouter := negroni.New(negroni.NewRecovery())
+
+	// todo receive this from args
+	db, err := internal.ConnectDatabase(config)
 
 	if err != nil {
-		log.Fatalf("Error connecting to database %s", err.Error())
-		return
+		return &negroni.Negroni{}
 	}
-	expectedResponse := 1
-	expectedJsonReponse, _ := json.Marshal(expectedResponse)
 
-	testCase.Run("createProject return the new id", func(t *testing.T) {
-		SetupAndResetDatabase(database)
+	for _, route := range routesToRegister {
+		var handler http.Handler
+		handler = route.HandlerFunc(db)
+		handler = internal.Logger(handler, route.Name)
 
-		response, err := createProject(database, "", "", "")
+		router.
+			Methods(route.Method).
+			Path(route.Pattern).
+			Name(route.Name).
+			Handler(handler)
+	}
+	nRouter.UseHandler(router)
+	return nRouter
+}
 
-		var foundProject Project
+var routesToRegister = models.Routes{
+	models.Route{
+		Name:        "AddProject",
+		Method:      strings.ToUpper("Post"),
+		Pattern:     "/v1/projects",
+		HandlerFunc: CreateAddProjectHandler,
+	},
 
-		database.First(&foundProject)
-
-		require.Equal(t, nil, err)
-		require.Equal(t, string(expectedJsonReponse), fmt.Sprint(response))
-	})
-
-	testCase.Run("createProject with specific name and type", func(t *testing.T) {
-		SetupAndResetDatabase(database)
-		expectedProjectName := "project-name"
-		expectedType := "project-type"
-		expectedClient := "project-client"
-
-		createProject(database, expectedProjectName, expectedType, expectedClient)
-
-		var foundProject Project
-
-		database.First(&foundProject)
-
-		require.Equal(t, nil, err)
-		require.Equal(t, expectedProjectName, foundProject.Name)
-		require.Equal(t, expectedType, foundProject.Type)
-		require.Equal(t, expectedClient, foundProject.Client)
-	})
-
-	testCase.Run("create two projects", func(t *testing.T) {
-		SetupAndResetDatabase(database)
-
-		createProject(database, "project-1", "", "")
-		createProject(database, "project-2", "", "")
-
-		var foundProjects []Project
-
-		result := database.Find(&foundProjects)
-		log.Printf("number of rows %d", result.RowsAffected)
-		require.Equal(t, nil, err)
-		require.Equal(t, 2, int(result.RowsAffected))
-	})
-
-	testCase.Run("createProject returns error if project with same name already exits", func(t *testing.T) {
-		SetupAndResetDatabase(database)
-		expectedError := "Project with name \"project-name\" already exists"
-
-		expectedProjectName := "project-name"
-		expectedType := "project-type"
-		expectedClient := "project-client"
-
-		_, err1 := createProject(database, expectedProjectName, expectedType, expectedClient)
-
-		require.Equal(t, nil, err1)
-
-		_, err2 := createProject(database, expectedProjectName, expectedType, expectedClient)
-
-		require.Equal(t, expectedError, err2.Error())
-	})
+	models.Route{
+		Name:        "GetProjects",
+		Method:      strings.ToUpper("Get"),
+		Pattern:     "/v1/projects",
+		HandlerFunc: CreateGetProjectsHandler,
+	},
 }
 
 func TestCreateProjectHandler(testCase *testing.T) {
-	config, err := GetConfig("../.env")
+	config, err := internal.GetConfig("../../../.env")
 	if err != nil {
 		log.Fatalf("Error reading env configuration: %s", err.Error())
 		return
 	}
-	testRouter := NewRouter(config)
-	database, err := ConnectDatabase(config)
+
+	testRouter := newRouter(config)
+	database, err := internal.ConnectDatabase(config)
 	if err != nil {
 		log.Fatalf("Error connecting to database %s", err.Error())
 		return
@@ -107,16 +78,16 @@ func TestCreateProjectHandler(testCase *testing.T) {
 
 	projectName := "project-name"
 
-	inputProject := Project{
+	inputProject := models.Project{
 		Name:   projectName,
 		Client: "client-name",
 		Type:   "project-type",
 	}
 
 	testCase.Run("/projects - 200 - project created", func(t *testing.T) {
-		SetupAndResetDatabase(database)
+		internal.SetupAndResetDatabase(database)
 
-		expectedResponse := CreateProjectResponse{
+		expectedResponse := models.CreateProjectResponse{
 			Id: "1",
 		}
 
@@ -138,7 +109,7 @@ func TestCreateProjectHandler(testCase *testing.T) {
 		statusCode := responseRecorder.Result().StatusCode
 		require.Equal(t, http.StatusOK, statusCode, "The response statusCode should be 200")
 
-		var foundProject Project
+		var foundProject models.Project
 		database.First(&foundProject)
 
 		rawBody := responseRecorder.Result().Body
@@ -149,8 +120,8 @@ func TestCreateProjectHandler(testCase *testing.T) {
 	})
 
 	testCase.Run("/projects - 400 - request has wrong types", func(t *testing.T) {
-		SetupAndResetDatabase(database)
-		expectedResponse := ErrorResponse{
+		internal.SetupAndResetDatabase(database)
+		expectedResponse := models.ErrorResponse{
 			ErrorMessage: "Error reading request body",
 			ErrorCode:    400,
 		}
@@ -188,15 +159,15 @@ func TestCreateProjectHandler(testCase *testing.T) {
 	})
 
 	testCase.Run("/projects - 400 - missing name", func(t *testing.T) {
-		SetupAndResetDatabase(database)
-		expectedResponse := ErrorResponse{
+		internal.SetupAndResetDatabase(database)
+		expectedResponse := models.ErrorResponse{
 			ErrorMessage: "Validation error, field: Project.Name, tag: required",
 			ErrorCode:    400,
 		}
 
 		expectedJsonReponse, _ := json.Marshal(expectedResponse)
 
-		inputProject := Project{
+		inputProject := models.Project{
 			Client: "client-name",
 			Type:   "project-type",
 		}
@@ -224,15 +195,15 @@ func TestCreateProjectHandler(testCase *testing.T) {
 	})
 
 	testCase.Run("/projects - 400 - missing name and type", func(t *testing.T) {
-		SetupAndResetDatabase(database)
-		expectedResponse := ErrorResponse{
+		internal.SetupAndResetDatabase(database)
+		expectedResponse := models.ErrorResponse{
 			ErrorMessage: "Validation error, field: Project.Name, tag: required\nValidation error, field: Project.Type, tag: required",
 			ErrorCode:    400,
 		}
 
 		expectedJsonReponse, _ := json.Marshal(expectedResponse)
 
-		inputProject := Project{
+		inputProject := models.Project{
 			Client: "client-name",
 		}
 
@@ -259,10 +230,10 @@ func TestCreateProjectHandler(testCase *testing.T) {
 	})
 
 	testCase.Run("/projects - 409 - project already exists", func(t *testing.T) {
-		SetupAndResetDatabase(database)
+		internal.SetupAndResetDatabase(database)
 		database.Create(&inputProject)
 
-		expectedResponse := ErrorResponse{
+		expectedResponse := models.ErrorResponse{
 			ErrorMessage: fmt.Sprintf("Project with name \"%s\" already exists", projectName),
 			ErrorCode:    409,
 		}
@@ -292,81 +263,28 @@ func TestCreateProjectHandler(testCase *testing.T) {
 	})
 }
 
-func TestGetProjects(testCase *testing.T) {
-	config, err := GetConfig("../.env")
-	if err != nil {
-		log.Fatalf("Error reading env configuration: %s", err.Error())
-		return
-	}
-	database, err := ConnectDatabase(config)
-
-	if err != nil {
-		log.Fatalf("Error connecting to database %s", err.Error())
-		return
-	}
-
-	testCase.Run("getProjects return a list of projects", func(t *testing.T) {
-		SetupAndResetDatabase(database)
-		expectedProjectName := "project-name"
-		expectedType := "project-type"
-		expectedClient := "project-client"
-
-		createProject(database, expectedProjectName, expectedType, expectedClient)
-
-		expectedResponse := []Project{
-			{
-				Name:   expectedProjectName,
-				Type:   expectedType,
-				Client: expectedClient,
-			},
-		}
-
-		foundProjects, err := getProjects(database)
-
-		require.Equal(t, nil, err)
-		require.Equal(t, expectedResponse[0].Name, foundProjects[0].Name)
-		require.Equal(t, expectedResponse[0].Type, foundProjects[0].Type)
-		require.Equal(t, expectedResponse[0].Client, foundProjects[0].Client)
-		require.Equal(t, uint(1), foundProjects[0].ID)
-	})
-}
-func assertProjectsEquality(t *testing.T, expected []byte, actual []byte) {
-	var expectedProjects []Project
-	json.Unmarshal(expected, &expectedProjects)
-
-	var actualProjects []Project
-	json.Unmarshal(actual, &actualProjects)
-
-	for index, expectedProject := range expectedProjects {
-		require.Equal(t, expectedProject.Name, actualProjects[index].Name)
-		require.Equal(t, expectedProject.Type, actualProjects[index].Type)
-		require.Equal(t, expectedProject.Client, actualProjects[index].Client)
-		require.Equal(t, expectedProject.ID, actualProjects[index].ID)
-	}
-
-}
 func TestGetProjectsHandler(testCase *testing.T) {
-	config, err := GetConfig("../.env")
+	config, err := internal.GetConfig("../../../.env")
 	if err != nil {
 		log.Fatalf("Error reading env configuration: %s", err.Error())
 		return
 	}
-	testRouter := NewRouter(config)
-	database, err := ConnectDatabase(config)
+	testRouter := newRouter(config)
+	database, err := internal.ConnectDatabase(config)
 	if err != nil {
 		log.Fatalf("Error connecting to database %s", err.Error())
 		return
 	}
 
 	testCase.Run("/projects - 200 - returned list of projects", func(t *testing.T) {
-		SetupAndResetDatabase(database)
+		internal.SetupAndResetDatabase(database)
 		expectedProjectName := "project-name"
 		expectedType := "project-type"
 		expectedClient := "project-client"
 
-		createProject(database, expectedProjectName, expectedType, expectedClient)
+		internal.CreateProject(database, expectedProjectName, expectedType, expectedClient)
 
-		expectedResponse := []Project{
+		expectedResponse := []models.Project{
 			{
 				ID:     1,
 				Name:   expectedProjectName,
@@ -395,4 +313,20 @@ func TestGetProjectsHandler(testCase *testing.T) {
 
 		assertProjectsEquality(t, expectedJsonReponse, body)
 	})
+}
+
+func assertProjectsEquality(t *testing.T, expected []byte, actual []byte) {
+	var expectedProjects []models.Project
+	json.Unmarshal(expected, &expectedProjects)
+
+	var actualProjects []models.Project
+	json.Unmarshal(actual, &actualProjects)
+
+	for index, expectedProject := range expectedProjects {
+		require.Equal(t, expectedProject.Name, actualProjects[index].Name)
+		require.Equal(t, expectedProject.Type, actualProjects[index].Type)
+		require.Equal(t, expectedProject.Client, actualProjects[index].Client)
+		require.Equal(t, expectedProject.ID, actualProjects[index].ID)
+	}
+
 }

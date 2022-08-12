@@ -1,14 +1,20 @@
-package routes
+package internal
 
 import (
 	"fmt"
 	"log"
+	"strings"
+
+	"issue-service/app/service-api/cfg"
+	models "issue-service/app/service-api/routes/makes/models"
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
 
-func getConnectionString(config EnvConfiguration) string {
+const DUPLICATE_KEY_ERROR = "duplicate key value violates unique constraint"
+
+func getConnectionString(config cfg.EnvConfiguration) string {
 	return fmt.Sprintf("host=%s user=%s password=%s port=5432 dbname=%s",
 		config.DATABASE_HOST,
 		config.DATABASE_USERNAME,
@@ -17,7 +23,7 @@ func getConnectionString(config EnvConfiguration) string {
 	)
 }
 
-func ConnectDatabase(config EnvConfiguration) (*gorm.DB, error) {
+func ConnectDatabase(config cfg.EnvConfiguration) (*gorm.DB, error) {
 	dsn := getConnectionString(config)
 
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
@@ -30,7 +36,11 @@ func ConnectDatabase(config EnvConfiguration) (*gorm.DB, error) {
 }
 
 func SetupAndResetDatabase(database *gorm.DB) {
-	database.AutoMigrate(&Project{})
+	database.AutoMigrate(&models.Project{})
 	database.Exec("DELETE FROM projects")
 	database.Exec("ALTER SEQUENCE projects_id_seq RESTART WITH 1")
+}
+
+func IsDuplicateKeyError(databaseError error) bool {
+	return strings.Contains(databaseError.Error(), DUPLICATE_KEY_ERROR)
 }
