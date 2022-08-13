@@ -23,3 +23,8 @@ type Route struct {
 }
 
 type Routes []Route
+
+type Router interface {
+	// Routes returns the list of routes to add to the docker server.
+	Routes() Routes
+}

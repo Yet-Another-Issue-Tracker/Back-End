@@ -1,4 +1,4 @@
-package routes
+package project
 
 import (
 	"encoding/json"
@@ -53,7 +53,7 @@ func CreateAddProjectHandler(database *gorm.DB) http.HandlerFunc {
 			return
 		}
 
-		projectId, err := internal.CreateProject(
+		projectId, err := CreateProject(
 			database,
 			requestProject.Name,
 			requestProject.Type,
@@ -78,7 +78,7 @@ func CreateGetProjectsHandler(database *gorm.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 
-		projects, err := internal.GetProjects(database)
+		projects, err := GetProjects(database)
 		if err != nil {
 			internal.ReturnErrorResponse(err, w)
 			return

@@ -1,9 +1,10 @@
-package internal
+package project
 
 import (
 	"fmt"
 
 	models "issue-service/app/issue-api/routes/models"
+	"issue-service/internal"
 
 	log "github.com/sirupsen/logrus"
 	"gorm.io/gorm"
@@ -29,7 +30,7 @@ func CreateProject(database *gorm.DB, projectName string, projectType string, pr
 
 	if result.Error != nil {
 		log.WithField("error", result.Error.Error()).Error("Error creating new project")
-		if IsDuplicateKeyError(result.Error) {
+		if internal.IsDuplicateKeyError(result.Error) {
 			return 0, &models.ErrorResponse{
 				ErrorMessage: fmt.Sprintf("Project with name \"%s\" already exists", projectName),
 				ErrorCode:    409,

@@ -1,9 +1,10 @@
-package internal
+package project
 
 import (
 	"encoding/json"
 	"fmt"
-	models "issue-service/app/issue-api/routes/makes/models"
+	models "issue-service/app/issue-api/routes/models"
+	"issue-service/internal"
 	"log"
 	"testing"
 
@@ -11,12 +12,12 @@ import (
 )
 
 func TestCreateProject(testCase *testing.T) {
-	config, err := GetConfig("../.env")
+	config, err := internal.GetConfig("../../../../.env")
 	if err != nil {
 		log.Fatalf("Error reading env configuration: %s", err.Error())
 		return
 	}
-	database, err := ConnectDatabase(config)
+	database, err := internal.ConnectDatabase(config)
 
 	if err != nil {
 		log.Fatalf("Error connecting to database %s", err.Error())
@@ -26,7 +27,7 @@ func TestCreateProject(testCase *testing.T) {
 	expectedJsonReponse, _ := json.Marshal(expectedResponse)
 
 	testCase.Run("createProject return the new id", func(t *testing.T) {
-		SetupAndResetDatabase(database)
+		internal.SetupAndResetDatabase(database)
 
 		response, err := CreateProject(database, "", "", "")
 
@@ -39,7 +40,7 @@ func TestCreateProject(testCase *testing.T) {
 	})
 
 	testCase.Run("createProject with specific name and type", func(t *testing.T) {
-		SetupAndResetDatabase(database)
+		internal.SetupAndResetDatabase(database)
 		expectedProjectName := "project-name"
 		expectedType := "project-type"
 		expectedClient := "project-client"
@@ -57,7 +58,7 @@ func TestCreateProject(testCase *testing.T) {
 	})
 
 	testCase.Run("create two projects", func(t *testing.T) {
-		SetupAndResetDatabase(database)
+		internal.SetupAndResetDatabase(database)
 
 		CreateProject(database, "project-1", "", "")
 		CreateProject(database, "project-2", "", "")
@@ -71,7 +72,7 @@ func TestCreateProject(testCase *testing.T) {
 	})
 
 	testCase.Run("createProject returns error if project with same name already exits", func(t *testing.T) {
-		SetupAndResetDatabase(database)
+		internal.SetupAndResetDatabase(database)
 		expectedError := "Project with name \"project-name\" already exists"
 
 		expectedProjectName := "project-name"
@@ -89,12 +90,12 @@ func TestCreateProject(testCase *testing.T) {
 }
 
 func TestGetProjects(testCase *testing.T) {
-	config, err := GetConfig("../.env")
+	config, err := internal.GetConfig("../../../../.env")
 	if err != nil {
 		log.Fatalf("Error reading env configuration: %s", err.Error())
 		return
 	}
-	database, err := ConnectDatabase(config)
+	database, err := internal.ConnectDatabase(config)
 
 	if err != nil {
 		log.Fatalf("Error connecting to database %s", err.Error())
@@ -102,7 +103,7 @@ func TestGetProjects(testCase *testing.T) {
 	}
 
 	testCase.Run("getProjects return a list of projects", func(t *testing.T) {
-		SetupAndResetDatabase(database)
+		internal.SetupAndResetDatabase(database)
 		expectedProjectName := "project-name"
 		expectedType := "project-type"
 		expectedClient := "project-client"

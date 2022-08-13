@@ -4,6 +4,7 @@ import (
 	"issue-service/app/issue-api/cfg"
 	"issue-service/app/issue-api/routes"
 	"issue-service/app/issue-api/routes/models"
+	"issue-service/app/issue-api/routes/project"
 	"issue-service/internal"
 	"net/http"
 	"strings"
@@ -23,6 +24,7 @@ func NewRouter(config cfg.EnvConfiguration) *negroni.Negroni {
 		return &negroni.Negroni{}
 	}
 
+	routesToRegister = append(routesToRegister, project.NewRouter(db).Routes()...)
 	for _, route := range routesToRegister {
 		var handler http.Handler
 		handler = route.HandlerFunc(db)
@@ -34,6 +36,7 @@ func NewRouter(config cfg.EnvConfiguration) *negroni.Negroni {
 			Name(route.Name).
 			Handler(handler)
 	}
+
 	nRouter.UseHandler(router)
 	return nRouter
 }
@@ -79,20 +82,6 @@ var routesToRegister = models.Routes{
 		Method:      strings.ToUpper("Patch"),
 		Pattern:     "/v1/projects/{projectId}/sprints/{sprintId}/issues/{issueId}",
 		HandlerFunc: routes.CreatePatchIssuesByIdHandler,
-	},
-
-	models.Route{
-		Name:        "AddProject",
-		Method:      strings.ToUpper("Post"),
-		Pattern:     "/v1/projects",
-		HandlerFunc: routes.CreateAddProjectHandler,
-	},
-
-	models.Route{
-		Name:        "GetProjects",
-		Method:      strings.ToUpper("Get"),
-		Pattern:     "/v1/projects",
-		HandlerFunc: routes.CreateGetProjectsHandler,
 	},
 
 	models.Route{
