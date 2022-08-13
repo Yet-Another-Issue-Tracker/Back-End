@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"issue-service/app/issue-api/cfg"
-	models "issue-service/app/issue-api/routes/makes/models"
+	models "issue-service/app/issue-api/routes/models"
 	"log"
 	"net/http"
 

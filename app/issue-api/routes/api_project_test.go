@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"issue-service/app/issue-api/cfg"
-	"issue-service/app/issue-api/routes/makes/models"
+	"issue-service/app/issue-api/routes/models"
 	"issue-service/internal"
 	"net/http"
 	"net/http/httptest"

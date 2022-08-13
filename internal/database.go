@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"issue-service/app/issue-api/cfg"
-	models "issue-service/app/issue-api/routes/makes/models"
+	models "issue-service/app/issue-api/routes/models"
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
