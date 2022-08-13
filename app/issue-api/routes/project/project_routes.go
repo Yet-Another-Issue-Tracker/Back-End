@@ -37,7 +37,7 @@ func getCreateProjectResponseBody(projectId uint) ([]byte, error) {
 	return responseBody, nil
 }
 
-func CreateAddProjectHandler(database *gorm.DB) http.HandlerFunc {
+func createAddProjectHandler(database *gorm.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 
@@ -74,11 +74,11 @@ func CreateAddProjectHandler(database *gorm.DB) http.HandlerFunc {
 	}
 }
 
-func CreateGetProjectsHandler(database *gorm.DB) http.HandlerFunc {
+func createGetProjectsHandler(database *gorm.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 
-		projects, err := GetProjects(database)
+		projects, err := getProjects(database)
 		if err != nil {
 			internal.ReturnErrorResponse(err, w)
 			return

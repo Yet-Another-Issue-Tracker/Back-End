@@ -10,7 +10,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func GetProjects(database *gorm.DB) ([]models.Project, error) {
+func getProjects(database *gorm.DB) ([]models.Project, error) {
 	var projects []models.Project
 	result := database.Find(&projects)
 	if result.Error != nil {
@@ -23,6 +23,7 @@ func GetProjects(database *gorm.DB) ([]models.Project, error) {
 	return projects, nil
 }
 
+// TODO: make this private
 func CreateProject(database *gorm.DB, projectName string, projectType string, projectClient string) (uint, error) {
 	project := models.Project{Name: projectName, Client: projectClient, Type: projectType}
 

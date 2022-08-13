@@ -118,7 +118,7 @@ func TestGetProjects(testCase *testing.T) {
 			},
 		}
 
-		foundProjects, err := GetProjects(database)
+		foundProjects, err := getProjects(database)
 
 		require.Equal(t, nil, err)
 		require.Equal(t, expectedResponse[0].Name, foundProjects[0].Name)

@@ -29,14 +29,14 @@ func (r *projectRouter) initRoutes() {
 			Name:        "AddProject",
 			Method:      strings.ToUpper("Post"),
 			Pattern:     "/v1/projects",
-			HandlerFunc: CreateAddProjectHandler,
+			HandlerFunc: createAddProjectHandler,
 		},
 
 		models.Route{
 			Name:        "GetProjects",
 			Method:      strings.ToUpper("Get"),
 			Pattern:     "/v1/projects",
-			HandlerFunc: CreateGetProjectsHandler,
+			HandlerFunc: createGetProjectsHandler,
 		},
 	}
 }

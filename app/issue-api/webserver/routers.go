@@ -83,18 +83,4 @@ var routesToRegister = models.Routes{
 		Pattern:     "/v1/projects/{projectId}/sprints/{sprintId}/issues/{issueId}",
 		HandlerFunc: routes.CreatePatchIssuesByIdHandler,
 	},
-
-	models.Route{
-		Name:        "AddSprint",
-		Method:      strings.ToUpper("Post"),
-		Pattern:     "/v1/projects/{projectId}/sprints",
-		HandlerFunc: routes.CreateAddSprintHandler,
-	},
-
-	models.Route{
-		Name:        "PatchSprint",
-		Method:      strings.ToUpper("Patch"),
-		Pattern:     "/v1/projects/{projectId}/sprints/{sprintId}",
-		HandlerFunc: routes.CreatePatchSprintHandler,
-	},
 }
