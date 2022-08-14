@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
@@ -309,6 +310,65 @@ func TestGetProjectsHandler(testCase *testing.T) {
 		require.NoError(t, readBodyError)
 
 		assertProjectsEquality(t, expectedJsonReponse, body)
+	})
+}
+
+func TestCreateSprintHandler(testCase *testing.T) {
+	config, err := internal.GetConfig("../../../.env")
+	if err != nil {
+		log.Fatalf("Error reading env configuration: %s", err.Error())
+		return
+	}
+
+	testRouter := NewRouter(config)
+	database, err := internal.ConnectDatabase(config)
+	if err != nil {
+		log.Fatalf("Error connecting to database %s", err.Error())
+		return
+	}
+
+	sprintNumber := "12345"
+
+	inputSprint := models.Sprint{
+		Number:    sprintNumber,
+		StartDate: time.Now(),
+		EndDate:   time.Now().AddDate(0, 0, 7),
+	}
+
+	testCase.Run("/projects - 200 - project created", func(t *testing.T) {
+		internal.SetupAndResetDatabase(database)
+
+		expectedResponse := models.CreateProjectResponse{
+			Id: "1",
+		}
+
+		expectedJsonReponse, _ := json.Marshal(expectedResponse)
+
+		requestBody, err := json.Marshal(inputSprint)
+
+		if err != nil {
+			log.WithField("error", err.Error()).Error("Error marshaling json")
+		}
+
+		bodyReader := bytes.NewReader(requestBody)
+
+		responseRecorder := httptest.NewRecorder()
+		request, requestError := http.NewRequest(http.MethodPost, "/v1/sprints", bodyReader)
+		require.NoError(t, requestError, "Error creating the /sprints request")
+
+		testRouter.ServeHTTP(responseRecorder, request)
+		statusCode := responseRecorder.Result().StatusCode
+		require.Equal(t, http.StatusOK, statusCode, "The response statusCode should be 200")
+
+		var foundSprint models.Sprint
+		database.First(&foundSprint)
+
+		rawBody := responseRecorder.Result().Body
+		body, readBodyError := ioutil.ReadAll(rawBody)
+		require.NoError(t, readBodyError)
+		require.Equal(t, string(expectedJsonReponse), string(body), "The response body should be the expected one")
+		require.Equal(t, sprintNumber, foundSprint.Number)
+		require.Equal(t, false, foundSprint.Completed)
 	})
 }
 

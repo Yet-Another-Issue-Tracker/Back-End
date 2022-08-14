@@ -5,6 +5,7 @@ import (
 	"issue-service/app/issue-api/routes"
 	"issue-service/app/issue-api/routes/models"
 	"issue-service/app/issue-api/routes/project"
+	"issue-service/app/issue-api/routes/sprint"
 	"issue-service/internal"
 	"net/http"
 	"strings"
@@ -25,6 +26,7 @@ func NewRouter(config cfg.EnvConfiguration) *negroni.Negroni {
 	}
 
 	routesToRegister = append(routesToRegister, project.NewRouter(db).Routes()...)
+	routesToRegister = append(routesToRegister, sprint.NewRouter(db).Routes()...)
 	for _, route := range routesToRegister {
 		var handler http.Handler
 		handler = route.HandlerFunc(db)

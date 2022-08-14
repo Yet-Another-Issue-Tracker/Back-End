@@ -7,8 +7,7 @@ import (
 )
 
 type Issue struct {
-	ID          uint   `gorm:"primaryKey"`
-	Id          string `json:"id,omitempty"`
+	ID          int    `gorm:"primaryKey"`
 	Type_       string `json:"type,omitempty"`
 	Title       string `json:"title,omitempty"`
 	Description string `json:"description,omitempty"`
