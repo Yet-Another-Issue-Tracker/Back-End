@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestCreateProject(testCase *testing.T) {
+func TestcreateProject(testCase *testing.T) {
 	config, err := internal.GetConfig("../../../../.env")
 	if err != nil {
 		log.Fatalf("Error reading env configuration: %s", err.Error())
@@ -33,7 +33,7 @@ func TestCreateProject(testCase *testing.T) {
 			Type:   "",
 			Client: "",
 		}
-		response, err := CreateProject(database, inputProject)
+		response, err := createProject(database, inputProject)
 
 		var foundProject models.Project
 
@@ -53,7 +53,7 @@ func TestCreateProject(testCase *testing.T) {
 			Type:   expectedType,
 			Client: expectedClient,
 		}
-		CreateProject(database, inputProject)
+		createProject(database, inputProject)
 
 		var foundProject models.Project
 
@@ -76,8 +76,8 @@ func TestCreateProject(testCase *testing.T) {
 		inputProject2 := inputProject1
 		inputProject2.Name = internal.GetRandomStringName(10)
 
-		CreateProject(database, inputProject1)
-		CreateProject(database, inputProject2)
+		createProject(database, inputProject1)
+		createProject(database, inputProject2)
 
 		var foundProjects []models.Project
 
@@ -101,11 +101,11 @@ func TestCreateProject(testCase *testing.T) {
 			Client: expectedClient,
 		}
 
-		_, err1 := CreateProject(database, inputProject)
+		_, err1 := createProject(database, inputProject)
 
 		require.Equal(t, nil, err1)
 
-		_, err2 := CreateProject(database, inputProject)
+		_, err2 := createProject(database, inputProject)
 
 		require.Equal(t, expectedError, err2.Error())
 	})
@@ -134,7 +134,7 @@ func TestGetProjects(testCase *testing.T) {
 			Type:   expectedType,
 			Client: expectedClient,
 		}
-		CreateProject(database, inputProject)
+		createProject(database, inputProject)
 
 		expectedResponse := []models.Project{
 			{

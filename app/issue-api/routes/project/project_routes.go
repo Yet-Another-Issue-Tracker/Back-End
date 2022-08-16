@@ -45,7 +45,7 @@ func createAddProjectHandler(database *gorm.DB) http.HandlerFunc {
 			Type:   requestBody.Type,
 		}
 
-		projectId, err := CreateProject(
+		projectId, err := createProject(
 			database,
 			requestProject,
 		)

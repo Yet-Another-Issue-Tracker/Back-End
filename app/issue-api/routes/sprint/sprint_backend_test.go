@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"issue-service/app/issue-api/routes/models"
-	"issue-service/app/issue-api/routes/project"
 	"issue-service/internal"
 	"log"
 	"testing"
@@ -44,7 +43,7 @@ func TestCreateSprint(testCase *testing.T) {
 			Type:   "project-type",
 			Client: "project-client",
 		}
-		project.CreateProject(database, inputProject)
+		database.Create(&inputProject)
 		response, err := createSprint(database, inputSprint)
 
 		var foundSprint models.Sprint
@@ -64,7 +63,7 @@ func TestCreateSprint(testCase *testing.T) {
 			Type:   "project-type",
 			Client: "project-client",
 		}
-		project.CreateProject(database, inputProject)
+		database.Create(&inputProject)
 
 		createSprint(database, inputSprint)
 
@@ -92,7 +91,7 @@ func TestCreateSprint(testCase *testing.T) {
 			Type:   "project-type",
 			Client: "project-client",
 		}
-		project.CreateProject(database, inputProject)
+		database.Create(&inputProject)
 
 		_, err1 := createSprint(database, inputSprint)
 

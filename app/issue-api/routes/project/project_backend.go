@@ -22,8 +22,7 @@ func getProjects(database *gorm.DB) ([]models.Project, error) {
 	return projects, nil
 }
 
-// TODO: make this private
-func CreateProject(database *gorm.DB, project models.Project) (uint, error) {
+func createProject(database *gorm.DB, project models.Project) (uint, error) {
 	result := database.Create(&project)
 
 	if result.Error != nil {

@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"issue-service/app/issue-api/routes/models"
-	"issue-service/app/issue-api/routes/project"
 	"issue-service/internal"
 	"net/http"
 	"net/http/httptest"
@@ -15,6 +14,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
+	"github.com/urfave/negroni"
 )
 
 func TestStatusRoutes(testCase *testing.T) {
@@ -260,7 +260,20 @@ func TestCreateProjectHandler(testCase *testing.T) {
 		require.Equal(t, fmt.Sprintf("%s\n", string(expectedJsonReponse)), string(body), "The response body should be the expected one")
 	})
 }
+func callCreateProjectAPI(createProject models.CreateProjectRequest, testRouter *negroni.Negroni) {
+	requestBody, err := json.Marshal(createProject)
 
+	if err != nil {
+		log.WithField("error", err.Error()).Error("Error marshaling json")
+	}
+
+	bodyReader := bytes.NewReader(requestBody)
+
+	request, _ := http.NewRequest(http.MethodPost, "/v1/projects", bodyReader)
+	responseRecorder := httptest.NewRecorder()
+
+	testRouter.ServeHTTP(responseRecorder, request)
+}
 func TestGetProjectsHandler(testCase *testing.T) {
 	config, err := internal.GetConfig("../../../.env")
 	if err != nil {
@@ -279,12 +292,13 @@ func TestGetProjectsHandler(testCase *testing.T) {
 		expectedProjectName := internal.GetRandomStringName(10)
 		expectedType := "project-type"
 		expectedClient := "project-client"
-		inputProject := models.Project{
+		inputProject := models.CreateProjectRequest{
 			Name:   expectedProjectName,
 			Type:   expectedType,
 			Client: expectedClient,
 		}
-		project.CreateProject(database, inputProject)
+
+		callCreateProjectAPI(inputProject, testRouter)
 
 		expectedResponse := []models.Project{
 			{
@@ -341,12 +355,13 @@ func TestCreateSprintHandler(testCase *testing.T) {
 
 	testCase.Run("/sprints - 200 - sprint created", func(t *testing.T) {
 		internal.SetupAndResetDatabase(database)
-		inputProject := models.Project{
+		inputProject := models.CreateProjectRequest{
 			Name:   internal.GetRandomStringName(10),
 			Type:   "project-type",
 			Client: "project-client",
 		}
-		project.CreateProject(database, inputProject)
+
+		callCreateProjectAPI(inputProject, testRouter)
 
 		expectedResponse := models.CreateResponse{
 			Id: "1",
