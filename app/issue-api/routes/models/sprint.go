@@ -8,6 +8,7 @@ import (
 
 type Sprint struct {
 	gorm.Model
+	ID                uint   `gorm:"primaryKey"`
 	Number            string `gorm:"uniqueIndex:idx_member"`
 	ProjectID         int    `gorm:"uniqueIndex:idx_member"`
 	Project           Project

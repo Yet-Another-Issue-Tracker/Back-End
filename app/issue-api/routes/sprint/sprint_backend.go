@@ -38,3 +38,16 @@ func createSprint(
 
 	return sprint.ID, nil
 }
+
+func patchSprint(database *gorm.DB, sprint models.Sprint) error {
+	result := database.Model(&sprint).Updates(sprint)
+
+	if result.Error != nil {
+		return &models.ErrorResponse{
+			ErrorMessage: result.Error.Error(),
+			ErrorCode:    500,
+		}
+	}
+
+	return nil
+}

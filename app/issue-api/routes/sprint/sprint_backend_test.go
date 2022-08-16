@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/require"
+	"gorm.io/gorm"
 )
 
 func TestCreateSprint(testCase *testing.T) {
@@ -18,8 +19,8 @@ func TestCreateSprint(testCase *testing.T) {
 		log.Fatalf("Error reading env configuration: %s", err.Error())
 		return
 	}
-	database, err := internal.ConnectDatabase(config)
 
+	database, err := internal.ConnectDatabase(config)
 	if err != nil {
 		log.Fatalf("Error connecting to database %s", err.Error())
 		return
@@ -110,5 +111,59 @@ func TestCreateSprint(testCase *testing.T) {
 		_, err := createSprint(database, inputSprint)
 
 		require.Equal(t, expectedError, err.Error())
+	})
+}
+
+func TestPatchSprint(testCase *testing.T) {
+	config, err := internal.GetConfig("../../../../.env")
+	if err != nil {
+		log.Fatalf("Error reading env configuration: %s", err.Error())
+		return
+	}
+
+	database, err := internal.ConnectDatabase(config)
+	if err != nil {
+		log.Fatalf("Error connecting to database %s", err.Error())
+		return
+	}
+	sprintNumber := "12345"
+
+	createProjectAndSprint := func(database *gorm.DB) uint {
+		inputProject := models.Project{
+			Name:   internal.GetRandomStringName(10),
+			Type:   "project-type",
+			Client: "project-client",
+		}
+		database.Create(&inputProject)
+
+		inputSprint := models.Sprint{
+			Number:    sprintNumber,
+			ProjectID: 1,
+			StartDate: time.Now(),
+			EndDate:   time.Now().AddDate(0, 0, 7),
+			Completed: false,
+		}
+		database.Create(&inputSprint)
+		return inputSprint.ID
+	}
+
+	testCase.Run("patchSprint update the Completed field only", func(t *testing.T) {
+		internal.SetupAndResetDatabase(database)
+		sprintId := createProjectAndSprint(database)
+
+		inputSprint := models.Sprint{
+			ID:        sprintId,
+			Completed: true,
+		}
+
+		err := patchSprint(database, inputSprint)
+		require.Equal(t, nil, err)
+
+		var foundSprint models.Sprint
+		database.First(&foundSprint)
+
+		require.Equal(t, true, foundSprint.Completed)
+		require.Equal(t, sprintNumber, foundSprint.Number)
+
 	})
 }
