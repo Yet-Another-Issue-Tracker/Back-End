@@ -27,7 +27,7 @@ FROM scratch
 
 ARG COMMIT_SHA=<not-specified>
 
-LABEL maintainer="undefined" \
+LABEL maintainer="fabio.percivaldi@hotmail.it" \
   name="issue-service" \
   description="" \
   vcs.sha="$COMMIT_SHA"
