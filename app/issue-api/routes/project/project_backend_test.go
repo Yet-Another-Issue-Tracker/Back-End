@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestcreateProject(testCase *testing.T) {
+func TestCreateProject(testCase *testing.T) {
 	config, err := internal.GetConfig("../../../../.env")
 	if err != nil {
 		log.Fatalf("Error reading env configuration: %s", err.Error())
