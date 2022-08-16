@@ -39,8 +39,12 @@ func TestCreateSprint(testCase *testing.T) {
 
 	testCase.Run("createSprint return the new id", func(t *testing.T) {
 		internal.SetupAndResetDatabase(database)
-
-		project.CreateProject(database, internal.GetRandomStringName(10), "type", "client")
+		inputProject := models.Project{
+			Name:   internal.GetRandomStringName(10),
+			Type:   "project-type",
+			Client: "project-client",
+		}
+		project.CreateProject(database, inputProject)
 		response, err := CreateSprint(database, inputSprint)
 
 		var foundSprint models.Sprint
@@ -55,7 +59,12 @@ func TestCreateSprint(testCase *testing.T) {
 		expectedSprint2Number := "98765"
 
 		internal.SetupAndResetDatabase(database)
-		project.CreateProject(database, internal.GetRandomStringName(10), "type", "client")
+		inputProject := models.Project{
+			Name:   internal.GetRandomStringName(10),
+			Type:   "project-type",
+			Client: "project-client",
+		}
+		project.CreateProject(database, inputProject)
 
 		CreateSprint(database, inputSprint)
 
@@ -78,7 +87,12 @@ func TestCreateSprint(testCase *testing.T) {
 		expectedError := fmt.Sprintf("Sprint with number \"%s\" already exists", expectedSprintNumber)
 
 		internal.SetupAndResetDatabase(database)
-		project.CreateProject(database, internal.GetRandomStringName(10), "type", "client")
+		inputProject := models.Project{
+			Name:   internal.GetRandomStringName(10),
+			Type:   "project-type",
+			Client: "project-client",
+		}
+		project.CreateProject(database, inputProject)
 
 		_, err1 := CreateSprint(database, inputSprint)
 

@@ -28,8 +28,12 @@ func TestCreateProject(testCase *testing.T) {
 
 	testCase.Run("createProject return the new id", func(t *testing.T) {
 		internal.SetupAndResetDatabase(database)
-
-		response, err := CreateProject(database, "", "", "")
+		inputProject := models.Project{
+			Name:   "",
+			Type:   "",
+			Client: "",
+		}
+		response, err := CreateProject(database, inputProject)
 
 		var foundProject models.Project
 
@@ -44,8 +48,12 @@ func TestCreateProject(testCase *testing.T) {
 		expectedProjectName := internal.GetRandomStringName(10)
 		expectedType := "project-type"
 		expectedClient := "project-client"
-
-		CreateProject(database, expectedProjectName, expectedType, expectedClient)
+		inputProject := models.Project{
+			Name:   expectedProjectName,
+			Type:   expectedType,
+			Client: expectedClient,
+		}
+		CreateProject(database, inputProject)
 
 		var foundProject models.Project
 
@@ -60,8 +68,16 @@ func TestCreateProject(testCase *testing.T) {
 	testCase.Run("create two projects", func(t *testing.T) {
 		internal.SetupAndResetDatabase(database)
 
-		CreateProject(database, internal.GetRandomStringName(10), "", "")
-		CreateProject(database, internal.GetRandomStringName(10), "", "")
+		inputProject1 := models.Project{
+			Name:   internal.GetRandomStringName(10),
+			Type:   "",
+			Client: "",
+		}
+		inputProject2 := inputProject1
+		inputProject2.Name = internal.GetRandomStringName(10)
+
+		CreateProject(database, inputProject1)
+		CreateProject(database, inputProject2)
 
 		var foundProjects []models.Project
 
@@ -79,12 +95,17 @@ func TestCreateProject(testCase *testing.T) {
 
 		expectedType := "project-type"
 		expectedClient := "project-client"
+		inputProject := models.Project{
+			Name:   expectedProjectName,
+			Type:   expectedType,
+			Client: expectedClient,
+		}
 
-		_, err1 := CreateProject(database, expectedProjectName, expectedType, expectedClient)
+		_, err1 := CreateProject(database, inputProject)
 
 		require.Equal(t, nil, err1)
 
-		_, err2 := CreateProject(database, expectedProjectName, expectedType, expectedClient)
+		_, err2 := CreateProject(database, inputProject)
 
 		require.Equal(t, expectedError, err2.Error())
 	})
@@ -108,8 +129,12 @@ func TestGetProjects(testCase *testing.T) {
 		expectedProjectName := internal.GetRandomStringName(10)
 		expectedType := "project-type"
 		expectedClient := "project-client"
-
-		CreateProject(database, expectedProjectName, expectedType, expectedClient)
+		inputProject := models.Project{
+			Name:   expectedProjectName,
+			Type:   expectedType,
+			Client: expectedClient,
+		}
+		CreateProject(database, inputProject)
 
 		expectedResponse := []models.Project{
 			{

@@ -159,7 +159,7 @@ func TestCreateProjectHandler(testCase *testing.T) {
 	testCase.Run("/projects - 400 - missing name", func(t *testing.T) {
 		internal.SetupAndResetDatabase(database)
 		expectedResponse := models.ErrorResponse{
-			ErrorMessage: "Validation error, field: Project.Name, tag: required",
+			ErrorMessage: "Validation error, field: CreateProjectRequest.Name, tag: required",
 			ErrorCode:    400,
 		}
 
@@ -195,7 +195,7 @@ func TestCreateProjectHandler(testCase *testing.T) {
 	testCase.Run("/projects - 400 - missing name and type", func(t *testing.T) {
 		internal.SetupAndResetDatabase(database)
 		expectedResponse := models.ErrorResponse{
-			ErrorMessage: "Validation error, field: Project.Name, tag: required\nValidation error, field: Project.Type, tag: required",
+			ErrorMessage: "Validation error, field: CreateProjectRequest.Name, tag: required\nValidation error, field: CreateProjectRequest.Type, tag: required",
 			ErrorCode:    400,
 		}
 
@@ -279,8 +279,12 @@ func TestGetProjectsHandler(testCase *testing.T) {
 		expectedProjectName := internal.GetRandomStringName(10)
 		expectedType := "project-type"
 		expectedClient := "project-client"
-
-		project.CreateProject(database, expectedProjectName, expectedType, expectedClient)
+		inputProject := models.Project{
+			Name:   expectedProjectName,
+			Type:   expectedType,
+			Client: expectedClient,
+		}
+		project.CreateProject(database, inputProject)
 
 		expectedResponse := []models.Project{
 			{
@@ -337,7 +341,13 @@ func TestCreateSprintHandler(testCase *testing.T) {
 
 	testCase.Run("/sprints - 200 - sprint created", func(t *testing.T) {
 		internal.SetupAndResetDatabase(database)
-		project.CreateProject(database, internal.GetRandomStringName(10), "project-type", "project-client")
+		inputProject := models.Project{
+			Name:   internal.GetRandomStringName(10),
+			Type:   "project-type",
+			Client: "project-client",
+		}
+		project.CreateProject(database, inputProject)
+
 		expectedResponse := models.CreateResponse{
 			Id: "1",
 		}

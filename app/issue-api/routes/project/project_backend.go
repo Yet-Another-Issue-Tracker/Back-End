@@ -23,17 +23,14 @@ func getProjects(database *gorm.DB) ([]models.Project, error) {
 }
 
 // TODO: make this private
-// TODO: receive a project in input
-func CreateProject(database *gorm.DB, projectName string, projectType string, projectClient string) (uint, error) {
-	project := models.Project{Name: projectName, Client: projectClient, Type: projectType}
-
+func CreateProject(database *gorm.DB, project models.Project) (uint, error) {
 	result := database.Create(&project)
 
 	if result.Error != nil {
 		log.WithField("error", result.Error.Error()).Error("Error creating new project")
 		if internal.IsDuplicateKeyError(result.Error) {
 			return 0, &models.ErrorResponse{
-				ErrorMessage: fmt.Sprintf("Project with name \"%s\" already exists", projectName),
+				ErrorMessage: fmt.Sprintf("Project with name \"%s\" already exists", project.Name),
 				ErrorCode:    409,
 			}
 		}

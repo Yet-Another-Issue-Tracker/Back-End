@@ -10,12 +10,12 @@ import (
 	"gorm.io/gorm"
 )
 
-func getProjectFromRequestBody(r *http.Request) (models.Project, error) {
-	var requestProject models.Project
+func getProjectFromRequestBody(r *http.Request) (models.CreateProjectRequest, error) {
+	var requestProject models.CreateProjectRequest
 	err := json.NewDecoder(r.Body).Decode(&requestProject)
 	if err != nil {
 		log.WithField("error", err.Error()).Error("Error reading request body")
-		return models.Project{}, &models.ErrorResponse{
+		return models.CreateProjectRequest{}, &models.ErrorResponse{
 			ErrorMessage: "Error reading request body",
 			ErrorCode:    400,
 		}
@@ -27,23 +27,27 @@ func createAddProjectHandler(database *gorm.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 
-		requestProject, err := getProjectFromRequestBody(r)
+		requestBody, err := getProjectFromRequestBody(r)
 		if err != nil {
 			internal.LogAndReturnErrorResponse(err, w)
 			return
 		}
 
-		validationErr := internal.ValidateRequest(requestProject)
+		validationErr := internal.ValidateRequest(requestBody)
 		if validationErr != nil {
 			internal.LogAndReturnErrorResponse(validationErr, w)
 			return
 		}
 
+		requestProject := models.Project{
+			Name:   requestBody.Name,
+			Client: requestBody.Client,
+			Type:   requestBody.Type,
+		}
+
 		projectId, err := CreateProject(
 			database,
-			requestProject.Name,
-			requestProject.Type,
-			requestProject.Client,
+			requestProject,
 		)
 		if err != nil {
 			internal.LogAndReturnErrorResponse(err, w)
