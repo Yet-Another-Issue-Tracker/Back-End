@@ -11,7 +11,7 @@ go run main.go
 ## Run test
 
 ```
-go test ./routes
+go test ./...
 ```
 
 ## Test the API performance

@@ -1,8 +1,11 @@
 package sprint
 
 import (
+	"fmt"
 	"issue-service/app/issue-api/routes/models"
+	"issue-service/internal"
 
+	log "github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 )
 
@@ -13,6 +16,13 @@ func CreateSprint(
 	result := database.Create(&sprint)
 
 	if result.Error != nil {
+		log.WithField("error", result.Error.Error()).Error("Error creating new sprint")
+		if internal.IsDuplicateKeyError(result.Error) {
+			return 0, &models.ErrorResponse{
+				ErrorMessage: fmt.Sprintf("Sprint with number \"%s\" already exists", sprint.Number),
+				ErrorCode:    409,
+			}
+		}
 		return 0, &models.ErrorResponse{
 			ErrorMessage: result.Error.Error(),
 			ErrorCode:    500,

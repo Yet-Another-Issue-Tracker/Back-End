@@ -8,8 +8,8 @@ import (
 
 type Sprint struct {
 	gorm.Model
-	Number            string
-	ProjectID         int
+	Number            string `gorm:"uniqueIndex:idx_member"`
+	ProjectID         int    `gorm:"uniqueIndex:idx_member"`
 	Project           Project
 	StartDate         time.Time
 	EndDate           time.Time

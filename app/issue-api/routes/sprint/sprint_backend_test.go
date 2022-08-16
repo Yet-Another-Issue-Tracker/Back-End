@@ -25,10 +25,11 @@ func TestCreateSprint(testCase *testing.T) {
 		log.Fatalf("Error connecting to database %s", err.Error())
 		return
 	}
+	expectedSprintNumber := "12345"
 	expectedResponse := 1
 	expectedJsonReponse, _ := json.Marshal(expectedResponse)
 	inputSprint := models.Sprint{
-		Number:    "1",
+		Number:    expectedSprintNumber,
 		ProjectID: 1,
 		StartDate: time.Now(),
 		EndDate:   time.Now().AddDate(0, 0, 7),
@@ -49,14 +50,16 @@ func TestCreateSprint(testCase *testing.T) {
 		require.Equal(t, string(expectedJsonReponse), fmt.Sprint(response))
 	})
 
-	testCase.Run("create two projects", func(t *testing.T) {
+	testCase.Run("create two sprint", func(t *testing.T) {
+		expectedSprint2Number := "98765"
+
 		internal.SetupAndResetDatabase(database)
 		project.CreateProject(database, internal.GetRandomStringName(10), "type", "client")
 
 		CreateSprint(database, inputSprint)
 
 		inputSprint2 := inputSprint
-		inputSprint2.Number = "2"
+		inputSprint2.Number = expectedSprint2Number
 
 		CreateSprint(database, inputSprint2)
 
@@ -66,7 +69,22 @@ func TestCreateSprint(testCase *testing.T) {
 		log.Printf("number of rows %d", result.RowsAffected)
 		require.Equal(t, nil, err)
 		require.Equal(t, 2, int(result.RowsAffected))
-		require.Equal(t, "1", foundSprints[0].Number)
-		require.Equal(t, "2", foundSprints[1].Number)
+		require.Equal(t, expectedSprintNumber, foundSprints[0].Number)
+		require.Equal(t, expectedSprint2Number, foundSprints[1].Number)
+	})
+
+	testCase.Run("createSprint returns error if sprint with same number already exits", func(t *testing.T) {
+		expectedError := fmt.Sprintf("Sprint with number \"%s\" already exists", expectedSprintNumber)
+
+		internal.SetupAndResetDatabase(database)
+		project.CreateProject(database, internal.GetRandomStringName(10), "type", "client")
+
+		_, err1 := CreateSprint(database, inputSprint)
+
+		require.Equal(t, nil, err1)
+
+		_, err2 := CreateSprint(database, inputSprint)
+
+		require.Equal(t, expectedError, err2.Error())
 	})
 }
