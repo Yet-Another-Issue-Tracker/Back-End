@@ -28,3 +28,7 @@ type Router interface {
 	// Routes returns the list of routes to add to the docker server.
 	Routes() Routes
 }
+
+type CreateResponse struct {
+	Id string `json:"id,omitempty"`
+}

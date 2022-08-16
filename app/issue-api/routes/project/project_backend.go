@@ -14,7 +14,6 @@ func getProjects(database *gorm.DB) ([]models.Project, error) {
 	var projects []models.Project
 	result := database.Find(&projects)
 	if result.Error != nil {
-		log.WithField("error", result.Error.Error()).Error("Error retrieving projects")
 		return []models.Project{}, &models.ErrorResponse{
 			ErrorMessage: "Error retrieving projects",
 			ErrorCode:    500,
@@ -24,6 +23,7 @@ func getProjects(database *gorm.DB) ([]models.Project, error) {
 }
 
 // TODO: make this private
+// TODO: receive a project in input
 func CreateProject(database *gorm.DB, projectName string, projectType string, projectClient string) (uint, error) {
 	project := models.Project{Name: projectName, Client: projectClient, Type: projectType}
 

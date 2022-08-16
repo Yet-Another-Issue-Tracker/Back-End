@@ -41,7 +41,7 @@ func TestCreateProject(testCase *testing.T) {
 
 	testCase.Run("createProject with specific name and type", func(t *testing.T) {
 		internal.SetupAndResetDatabase(database)
-		expectedProjectName := "project-name"
+		expectedProjectName := internal.GetRandomStringName(10)
 		expectedType := "project-type"
 		expectedClient := "project-client"
 
@@ -60,8 +60,8 @@ func TestCreateProject(testCase *testing.T) {
 	testCase.Run("create two projects", func(t *testing.T) {
 		internal.SetupAndResetDatabase(database)
 
-		CreateProject(database, "project-1", "", "")
-		CreateProject(database, "project-2", "", "")
+		CreateProject(database, internal.GetRandomStringName(10), "", "")
+		CreateProject(database, internal.GetRandomStringName(10), "", "")
 
 		var foundProjects []models.Project
 
@@ -73,9 +73,10 @@ func TestCreateProject(testCase *testing.T) {
 
 	testCase.Run("createProject returns error if project with same name already exits", func(t *testing.T) {
 		internal.SetupAndResetDatabase(database)
-		expectedError := "Project with name \"project-name\" already exists"
 
-		expectedProjectName := "project-name"
+		expectedProjectName := internal.GetRandomStringName(10)
+		expectedError := fmt.Sprintf("Project with name \"%s\" already exists", expectedProjectName)
+
 		expectedType := "project-type"
 		expectedClient := "project-client"
 
@@ -104,7 +105,7 @@ func TestGetProjects(testCase *testing.T) {
 
 	testCase.Run("getProjects return a list of projects", func(t *testing.T) {
 		internal.SetupAndResetDatabase(database)
-		expectedProjectName := "project-name"
+		expectedProjectName := internal.GetRandomStringName(10)
 		expectedType := "project-type"
 		expectedClient := "project-client"
 

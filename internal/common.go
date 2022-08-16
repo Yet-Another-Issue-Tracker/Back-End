@@ -6,12 +6,24 @@ import (
 	"fmt"
 	"issue-service/app/issue-api/cfg"
 	models "issue-service/app/issue-api/routes/models"
-	"log"
+	"math/rand"
 	"net/http"
+
+	log "github.com/sirupsen/logrus"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/spf13/viper"
 )
+
+const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+
+func GetRandomStringName(length int) string {
+	b := make([]byte, length)
+	for i := range b {
+		b[i] = letterBytes[rand.Int63()%int64(len(letterBytes))]
+	}
+	return string(b)
+}
 
 func GetConfig(path string) (cfg.EnvConfiguration, error) {
 	viper.SetConfigFile(path)
@@ -27,14 +39,14 @@ func GetConfig(path string) (cfg.EnvConfiguration, error) {
 		log.Fatal("Error reading env configuration")
 		return cfg.EnvConfiguration{}, err
 	}
-	log.Printf("Connected %s", config.DATABASE_HOST)
 
 	return config, nil
 }
 
-func ReturnErrorResponse(err error, w http.ResponseWriter) {
+func LogAndReturnErrorResponse(err error, w http.ResponseWriter) {
 	var errorResponse *models.ErrorResponse
 	errors.As(err, &errorResponse)
+	log.WithField("error", errorResponse.ErrorMessage)
 
 	jsonResponse, _ := json.Marshal(err)
 
@@ -61,4 +73,17 @@ func ValidateRequest(inputRequest interface{}) error {
 		}
 	}
 	return nil
+}
+
+func GetCreateResponseBody(id uint) ([]byte, error) {
+	response := models.CreateResponse{Id: fmt.Sprint(id)}
+
+	responseBody, err := json.Marshal(response)
+	if err != nil {
+		return []byte{}, &models.ErrorResponse{
+			ErrorMessage: "Error mashaling the response",
+			ErrorCode:    500,
+		}
+	}
+	return responseBody, nil
 }

@@ -6,6 +6,7 @@ import (
 	"gorm.io/gorm"
 )
 
+//TODO adapt this to sprint structs
 type Project struct {
 	ID        uint   `gorm:"primaryKey"`
 	Client    string `json:"client,omitempty"`
@@ -14,8 +15,4 @@ type Project struct {
 	CreatedAt time.Time
 	UpdatedAt time.Time
 	DeletedAt gorm.DeletedAt `gorm:"index"`
-}
-
-type CreateProjectResponse struct {
-	Id string `json:"id,omitempty"`
 }

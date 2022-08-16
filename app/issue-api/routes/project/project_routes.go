@@ -2,7 +2,6 @@ package project
 
 import (
 	"encoding/json"
-	"fmt"
 	"issue-service/app/issue-api/routes/models"
 	"issue-service/internal"
 	"net/http"
@@ -23,19 +22,6 @@ func getProjectFromRequestBody(r *http.Request) (models.Project, error) {
 	}
 	return requestProject, nil
 }
-func getCreateProjectResponseBody(projectId uint) ([]byte, error) {
-	response := models.CreateProjectResponse{Id: fmt.Sprint(projectId)}
-
-	responseBody, err := json.Marshal(response)
-	if err != nil {
-		log.WithField("error", err.Error()).Error("Error marshaling the response")
-		return []byte{}, &models.ErrorResponse{
-			ErrorMessage: "Error mashaling the response",
-			ErrorCode:    500,
-		}
-	}
-	return responseBody, nil
-}
 
 func createAddProjectHandler(database *gorm.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -43,13 +29,13 @@ func createAddProjectHandler(database *gorm.DB) http.HandlerFunc {
 
 		requestProject, err := getProjectFromRequestBody(r)
 		if err != nil {
-			internal.ReturnErrorResponse(err, w)
+			internal.LogAndReturnErrorResponse(err, w)
 			return
 		}
 
 		validationErr := internal.ValidateRequest(requestProject)
 		if validationErr != nil {
-			internal.ReturnErrorResponse(validationErr, w)
+			internal.LogAndReturnErrorResponse(validationErr, w)
 			return
 		}
 
@@ -60,13 +46,13 @@ func createAddProjectHandler(database *gorm.DB) http.HandlerFunc {
 			requestProject.Client,
 		)
 		if err != nil {
-			internal.ReturnErrorResponse(err, w)
+			internal.LogAndReturnErrorResponse(err, w)
 			return
 		}
 
-		response, err := getCreateProjectResponseBody(projectId)
+		response, err := internal.GetCreateResponseBody(projectId)
 		if err != nil {
-			internal.ReturnErrorResponse(err, w)
+			internal.LogAndReturnErrorResponse(err, w)
 			return
 		}
 
@@ -80,13 +66,13 @@ func createGetProjectsHandler(database *gorm.DB) http.HandlerFunc {
 
 		projects, err := getProjects(database)
 		if err != nil {
-			internal.ReturnErrorResponse(err, w)
+			internal.LogAndReturnErrorResponse(err, w)
 			return
 		}
 		response, err := json.Marshal(projects)
 		if err != nil {
 			log.WithField("error", err.Error()).Error("Error marshaling the response")
-			internal.ReturnErrorResponse(&models.ErrorResponse{
+			internal.LogAndReturnErrorResponse(&models.ErrorResponse{
 				ErrorMessage: "Error mashaling the response",
 				ErrorCode:    500,
 			}, w)

@@ -38,7 +38,7 @@ func TestCreateSprint(testCase *testing.T) {
 	testCase.Run("createSprint return the new id", func(t *testing.T) {
 		internal.SetupAndResetDatabase(database)
 
-		project.CreateProject(database, "project-name", "type", "client")
+		project.CreateProject(database, internal.GetRandomStringName(10), "type", "client")
 		response, err := CreateSprint(database, inputSprint)
 
 		var foundSprint models.Sprint
@@ -51,7 +51,7 @@ func TestCreateSprint(testCase *testing.T) {
 
 	testCase.Run("create two projects", func(t *testing.T) {
 		internal.SetupAndResetDatabase(database)
-		project.CreateProject(database, "project-name", "type", "client")
+		project.CreateProject(database, internal.GetRandomStringName(10), "type", "client")
 
 		CreateSprint(database, inputSprint)
 

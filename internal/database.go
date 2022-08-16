@@ -35,13 +35,25 @@ func ConnectDatabase(config cfg.EnvConfiguration) (*gorm.DB, error) {
 	return db, nil
 }
 
-func SetupAndResetDatabase(database *gorm.DB) {
+func dropTables(database *gorm.DB) {
+	database.Migrator().DropTable(&models.Project{})
+	database.Migrator().DropTable(&models.Sprint{})
+}
+
+func automigrateDatabaseSchema(database *gorm.DB) {
 	database.AutoMigrate(&models.Project{})
 	database.AutoMigrate(&models.Sprint{})
-	database.Exec("DELETE FROM projects")
-	database.Exec("DELETE FROM sprints")
+}
+
+func resetSequenceId(database *gorm.DB) {
 	database.Exec("ALTER SEQUENCE projects_id_seq RESTART WITH 1")
 	database.Exec("ALTER SEQUENCE sprints_id_seq RESTART WITH 1")
+}
+
+func SetupAndResetDatabase(database *gorm.DB) {
+	dropTables(database)
+	automigrateDatabaseSchema(database)
+	resetSequenceId(database)
 }
 
 func IsDuplicateKeyError(databaseError error) bool {

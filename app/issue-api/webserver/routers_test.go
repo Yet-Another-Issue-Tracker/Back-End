@@ -74,7 +74,7 @@ func TestCreateProjectHandler(testCase *testing.T) {
 		return
 	}
 
-	projectName := "project-name"
+	projectName := internal.GetRandomStringName(10)
 
 	inputProject := models.Project{
 		Name:   projectName,
@@ -85,7 +85,7 @@ func TestCreateProjectHandler(testCase *testing.T) {
 	testCase.Run("/projects - 200 - project created", func(t *testing.T) {
 		internal.SetupAndResetDatabase(database)
 
-		expectedResponse := models.CreateProjectResponse{
+		expectedResponse := models.CreateResponse{
 			Id: "1",
 		}
 
@@ -276,7 +276,7 @@ func TestGetProjectsHandler(testCase *testing.T) {
 
 	testCase.Run("/projects - 200 - returned list of projects", func(t *testing.T) {
 		internal.SetupAndResetDatabase(database)
-		expectedProjectName := "project-name"
+		expectedProjectName := internal.GetRandomStringName(10)
 		expectedType := "project-type"
 		expectedClient := "project-client"
 
@@ -335,10 +335,10 @@ func TestCreateSprintHandler(testCase *testing.T) {
 		EndDate:   time.Now().AddDate(0, 0, 7),
 	}
 
-	testCase.Run("/projects - 200 - project created", func(t *testing.T) {
+	testCase.Run("/sprints - 200 - sprint created", func(t *testing.T) {
 		internal.SetupAndResetDatabase(database)
-
-		expectedResponse := models.CreateProjectResponse{
+		project.CreateProject(database, internal.GetRandomStringName(10), "project-type", "project-client")
+		expectedResponse := models.CreateResponse{
 			Id: "1",
 		}
 
@@ -353,7 +353,7 @@ func TestCreateSprintHandler(testCase *testing.T) {
 		bodyReader := bytes.NewReader(requestBody)
 
 		responseRecorder := httptest.NewRecorder()
-		request, requestError := http.NewRequest(http.MethodPost, "/v1/sprints", bodyReader)
+		request, requestError := http.NewRequest(http.MethodPost, "/v1/projects/1/sprints", bodyReader)
 		require.NoError(t, requestError, "Error creating the /sprints request")
 
 		testRouter.ServeHTTP(responseRecorder, request)

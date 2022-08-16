@@ -2,14 +2,12 @@ package main
 
 import (
 	"fmt"
-	"issue-service/app/issue-api/cfg"
 	"issue-service/app/issue-api/webserver"
+	"issue-service/internal"
 	"net/http"
 	"os"
 
 	log "github.com/sirupsen/logrus"
-
-	"github.com/spf13/viper"
 )
 
 func getLogLevel(logLevel string) log.Level {
@@ -42,19 +40,12 @@ func initLogging(logLevel string) {
 }
 
 func main() {
-	viper.SetConfigFile(".env")
-
-	if err := viper.ReadInConfig(); err != nil {
-		log.WithField("error", err.Error()).Fatal("Error reading env configuration")
+	config, err := internal.GetConfig("../../../../.env")
+	if err != nil {
+		log.Fatalf("Error reading env configuration: %s", err.Error())
 		return
 	}
 
-	var config cfg.EnvConfiguration
-
-	if err := viper.Unmarshal(&config); err != nil {
-		log.WithField("error", err.Error()).Fatal("Error unmarshaling env configuration")
-		return
-	}
 	initLogging(config.LOG_LEVEL)
 	router := webserver.NewRouter(config)
 
