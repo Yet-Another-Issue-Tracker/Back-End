@@ -9,8 +9,7 @@ import (
 	"gorm.io/gorm"
 )
 
-// TODO: make this private
-func CreateSprint(
+func createSprint(
 	database *gorm.DB, sprint models.Sprint) (uint, error) {
 
 	result := database.Create(&sprint)

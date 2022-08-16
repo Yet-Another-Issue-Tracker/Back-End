@@ -70,7 +70,7 @@ func createAddSprintHandler(database *gorm.DB) http.HandlerFunc {
 			return
 		}
 
-		sprintId, err := CreateSprint(
+		sprintId, err := createSprint(
 			database,
 			requestSprint,
 		)

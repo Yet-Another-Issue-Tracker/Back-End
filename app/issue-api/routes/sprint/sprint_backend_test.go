@@ -45,7 +45,7 @@ func TestCreateSprint(testCase *testing.T) {
 			Client: "project-client",
 		}
 		project.CreateProject(database, inputProject)
-		response, err := CreateSprint(database, inputSprint)
+		response, err := createSprint(database, inputSprint)
 
 		var foundSprint models.Sprint
 
@@ -66,12 +66,12 @@ func TestCreateSprint(testCase *testing.T) {
 		}
 		project.CreateProject(database, inputProject)
 
-		CreateSprint(database, inputSprint)
+		createSprint(database, inputSprint)
 
 		inputSprint2 := inputSprint
 		inputSprint2.Number = expectedSprint2Number
 
-		CreateSprint(database, inputSprint2)
+		createSprint(database, inputSprint2)
 
 		var foundSprints []models.Sprint
 
@@ -94,11 +94,11 @@ func TestCreateSprint(testCase *testing.T) {
 		}
 		project.CreateProject(database, inputProject)
 
-		_, err1 := CreateSprint(database, inputSprint)
+		_, err1 := createSprint(database, inputSprint)
 
 		require.Equal(t, nil, err1)
 
-		_, err2 := CreateSprint(database, inputSprint)
+		_, err2 := createSprint(database, inputSprint)
 
 		require.Equal(t, expectedError, err2.Error())
 	})
@@ -108,7 +108,7 @@ func TestCreateSprint(testCase *testing.T) {
 
 		internal.SetupAndResetDatabase(database)
 
-		_, err := CreateSprint(database, inputSprint)
+		_, err := createSprint(database, inputSprint)
 
 		require.Equal(t, expectedError, err.Error())
 	})
