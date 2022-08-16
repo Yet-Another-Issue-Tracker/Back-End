@@ -28,9 +28,10 @@ func TestCreateSprint(testCase *testing.T) {
 	expectedSprintNumber := "12345"
 	expectedResponse := 1
 	expectedJsonReponse, _ := json.Marshal(expectedResponse)
+	projectId := 1
 	inputSprint := models.Sprint{
 		Number:    expectedSprintNumber,
-		ProjectID: 1,
+		ProjectID: projectId,
 		StartDate: time.Now(),
 		EndDate:   time.Now().AddDate(0, 0, 7),
 		Completed: false,
@@ -86,5 +87,15 @@ func TestCreateSprint(testCase *testing.T) {
 		_, err2 := CreateSprint(database, inputSprint)
 
 		require.Equal(t, expectedError, err2.Error())
+	})
+
+	testCase.Run("createSprint returns error if project does not exists", func(t *testing.T) {
+		expectedError := fmt.Sprintf("Project with id \"%d\" does not exists", projectId)
+
+		internal.SetupAndResetDatabase(database)
+
+		_, err := CreateSprint(database, inputSprint)
+
+		require.Equal(t, expectedError, err.Error())
 	})
 }

@@ -23,6 +23,13 @@ func CreateSprint(
 				ErrorCode:    409,
 			}
 		}
+
+		if internal.IsForeignKeyError(result.Error) {
+			return 0, &models.ErrorResponse{
+				ErrorMessage: fmt.Sprintf("Project with id \"%d\" does not exists", sprint.ProjectID),
+				ErrorCode:    404,
+			}
+		}
 		return 0, &models.ErrorResponse{
 			ErrorMessage: result.Error.Error(),
 			ErrorCode:    500,
