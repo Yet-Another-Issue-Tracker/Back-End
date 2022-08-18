@@ -370,7 +370,6 @@ func TestCreateSprintHandler(testCase *testing.T) {
 		expectedJsonReponse, _ := json.Marshal(expectedResponse)
 
 		requestBody, err := json.Marshal(inputSprint)
-
 		if err != nil {
 			log.WithField("error", err.Error()).Error("Error marshaling json")
 		}
@@ -394,6 +393,64 @@ func TestCreateSprintHandler(testCase *testing.T) {
 		require.Equal(t, string(expectedJsonReponse), string(body), "The response body should be the expected one")
 		require.Equal(t, sprintNumber, foundSprint.Number)
 		require.Equal(t, false, foundSprint.Completed)
+	})
+}
+
+func TestPatchSprintHandler(testCase *testing.T) {
+	config, err := internal.GetConfig("../../../.env")
+	if err != nil {
+		log.Fatalf("Error reading env configuration: %s", err.Error())
+		return
+	}
+
+	testRouter := NewRouter(config)
+	database, err := internal.ConnectDatabase(config)
+	if err != nil {
+		log.Fatalf("Error connecting to database %s", err.Error())
+		return
+	}
+
+	sprintNumber := "12345"
+
+	inputSprint := models.Sprint{
+		ProjectID: 1,
+		Completed: false,
+		Number:    sprintNumber,
+		StartDate: time.Now(),
+		EndDate:   time.Now().AddDate(0, 0, 7),
+	}
+
+	testCase.Run("/sprints - 204 - sprint patched", func(t *testing.T) {
+		internal.SetupAndResetDatabase(database)
+		inputProject := models.Project{
+			Name:   internal.GetRandomStringName(10),
+			Type:   "project-type",
+			Client: "project-client",
+		}
+
+		database.Create(&inputProject)
+		database.Create(&inputSprint)
+
+		patchSprint := models.CreateSprintRequest{
+			Completed: true,
+		}
+		requestBody, err := json.Marshal(patchSprint)
+		if err != nil {
+			log.WithField("error", err.Error()).Error("Error marshaling json")
+		}
+
+		responseRecorder := httptest.NewRecorder()
+		bodyReader := bytes.NewReader(requestBody)
+		request, requestError := http.NewRequest(http.MethodPatch, fmt.Sprintf("/v1/projects/1/sprints/%d", inputSprint.ID), bodyReader)
+		require.NoError(t, requestError, "Error creating the /sprints request")
+
+		testRouter.ServeHTTP(responseRecorder, request)
+		statusCode := responseRecorder.Result().StatusCode
+		require.Equal(t, http.StatusNoContent, statusCode, "The response statusCode should be 204")
+
+		var foundSprint models.Sprint
+		database.First(&foundSprint)
+		require.Equal(t, true, foundSprint.Completed)
 	})
 }
 

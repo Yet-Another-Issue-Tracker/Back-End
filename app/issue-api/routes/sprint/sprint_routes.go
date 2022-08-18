@@ -33,7 +33,7 @@ func createAddSprintHandler(database *gorm.DB) http.HandlerFunc {
 		projectId, ok := vars["projectId"]
 		if !ok {
 			errorResponse := &models.ErrorResponse{
-				ErrorMessage: "Error reading path param from request",
+				ErrorMessage: "Error reading projectId path param from request",
 				ErrorCode:    500,
 			}
 			internal.LogAndReturnErrorResponse(errorResponse, w)
@@ -92,6 +92,66 @@ func createAddSprintHandler(database *gorm.DB) http.HandlerFunc {
 func createPatchSprintHandler(database *gorm.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-		w.WriteHeader(http.StatusOK)
+		vars := mux.Vars(r)
+		projectId, ok := vars["projectId"]
+		if !ok {
+			errorResponse := &models.ErrorResponse{
+				ErrorMessage: "Error reading projectId path param from request",
+				ErrorCode:    500,
+			}
+			internal.LogAndReturnErrorResponse(errorResponse, w)
+			return
+		}
+		sprintId, ok := vars["sprintId"]
+		if !ok {
+			errorResponse := &models.ErrorResponse{
+				ErrorMessage: "Error reading sprintId path param from request",
+				ErrorCode:    500,
+			}
+			internal.LogAndReturnErrorResponse(errorResponse, w)
+			return
+		}
+		requestBody, err := getSprintFromRequestBody(r)
+		if err != nil {
+			internal.LogAndReturnErrorResponse(err, w)
+			return
+		}
+
+		projectIdInt, err := strconv.Atoi(projectId)
+		if err != nil {
+			errorResponse := &models.ErrorResponse{
+				ErrorMessage: "Error parsing projectId to int",
+				ErrorCode:    500,
+			}
+			internal.LogAndReturnErrorResponse(errorResponse, w)
+			return
+		}
+
+		sprintUid, err := strconv.ParseUint(sprintId, 10, 32)
+		if err != nil {
+			errorResponse := &models.ErrorResponse{
+				ErrorMessage: "Error parsing sprintId to uint",
+				ErrorCode:    500,
+			}
+			internal.LogAndReturnErrorResponse(errorResponse, w)
+			return
+		}
+
+		requestSprint := models.Sprint{
+			ProjectID:         projectIdInt,
+			ID:                uint(sprintUid),
+			Number:            requestBody.Number,
+			StartDate:         requestBody.StartDate,
+			EndDate:           requestBody.EndDate,
+			Completed:         requestBody.Completed,
+			MaxIssuePerSprint: requestBody.MaxIssuePerSprint,
+		}
+
+		patchError := patchSprint(database, requestSprint)
+		if patchError != nil {
+			internal.LogAndReturnErrorResponse(err, w)
+		}
+
+		w.WriteHeader(http.StatusNoContent)
 	}
 }

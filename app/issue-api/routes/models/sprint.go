@@ -22,5 +22,6 @@ type CreateSprintRequest struct {
 	Number            string    `json:"number,omitempty" validate:"required"`
 	StartDate         time.Time `json:"startDate,omitempty"`
 	EndDate           time.Time `json:"endDate,omitempty"`
+	Completed         bool      `json:"completed,omitempty"`
 	MaxIssuePerSprint int       `json:"maxIssuePerSprint,omitempty"`
 }
