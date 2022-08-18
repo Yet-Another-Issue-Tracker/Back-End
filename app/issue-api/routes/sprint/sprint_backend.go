@@ -42,6 +42,12 @@ func createSprint(
 func patchSprint(database *gorm.DB, sprint models.Sprint) error {
 	result := database.Model(&sprint).Updates(sprint)
 
+	if result.RowsAffected == 0 {
+		return &models.ErrorResponse{
+			ErrorMessage: fmt.Sprintf("Sprint with id \"%d\" does not exists", sprint.ID),
+			ErrorCode:    404,
+		}
+	}
 	if result.Error != nil {
 		return &models.ErrorResponse{
 			ErrorMessage: result.Error.Error(),

@@ -164,6 +164,19 @@ func TestPatchSprint(testCase *testing.T) {
 
 		require.Equal(t, true, foundSprint.Completed)
 		require.Equal(t, sprintNumber, foundSprint.Number)
+	})
 
+	testCase.Run("patchSprint return error if sprint does not exist", func(t *testing.T) {
+		internal.SetupAndResetDatabase(database)
+		sprintId := uint(999999)
+		expectedError := fmt.Sprintf("Sprint with id \"%d\" does not exists", sprintId)
+
+		inputSprint := models.Sprint{
+			ID:        sprintId,
+			Completed: true,
+		}
+
+		err := patchSprint(database, inputSprint)
+		require.Equal(t, expectedError, err.Error())
 	})
 }
