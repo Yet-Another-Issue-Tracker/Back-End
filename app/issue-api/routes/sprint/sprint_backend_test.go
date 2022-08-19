@@ -257,7 +257,7 @@ func TestGetSprints(testCase *testing.T) {
 		foundSprints, err := getSprints(database, nonExistingProjectId)
 
 		require.Equal(t, nil, err)
-		require.Equal(t, []models.Sprint{}, foundSprints)
+		require.Equal(t, []models.GetSprintResponse{}, foundSprints)
 
 	})
 

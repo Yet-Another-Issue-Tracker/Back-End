@@ -28,10 +28,36 @@ type CreateSprintRequest struct {
 
 type CreatePatchRequest struct {
 	ID                uint      `json:"id" validate:"required"`
-	ProjectId         int       `json:"projectId" validate:"required"`
+	ProjectID         int       `json:"projectId" validate:"required"`
 	Number            string    `json:"number,omitempty"`
 	StartDate         time.Time `json:"startDate,omitempty"`
 	EndDate           time.Time `json:"endDate,omitempty"`
 	Completed         bool      `json:"completed,omitempty"`
 	MaxIssuePerSprint int       `json:"maxIssuePerSprint,omitempty"`
+}
+
+type GetSprintResponse struct {
+	ID                uint      `json:"id"`
+	ProjectID         int       `json:"projectId"`
+	Number            string    `json:"number,omitempty"`
+	StartDate         time.Time `json:"startDate,omitempty"`
+	EndDate           time.Time `json:"endDate,omitempty"`
+	Completed         bool      `json:"completed"`
+	MaxIssuePerSprint int       `json:"maxIssuePerSprint,omitempty"`
+	CreatedAt         time.Time `json:"createdAt,omitempty"`
+	UpdatedAt         time.Time `json:"updatedAt,omitempty"`
+}
+
+func (sprint Sprint) GetSprintResponseFromSprint() GetSprintResponse {
+	return GetSprintResponse{
+		ID:                sprint.ID,
+		ProjectID:         sprint.ProjectID,
+		Number:            sprint.Number,
+		StartDate:         sprint.StartDate,
+		EndDate:           sprint.EndDate,
+		Completed:         sprint.Completed,
+		MaxIssuePerSprint: sprint.MaxIssuePerSprint,
+		CreatedAt:         sprint.CreatedAt,
+		UpdatedAt:         sprint.UpdatedAt,
+	}
 }

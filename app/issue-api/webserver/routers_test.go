@@ -539,9 +539,9 @@ func TestGetSprintsHandler(testCase *testing.T) {
 		database.Create(&inputSprint)
 		database.Create(&newSprint)
 
-		expectedResponse := []models.Sprint{
-			inputSprint,
-			newSprint,
+		expectedResponse := []models.GetSprintResponse{
+			inputSprint.GetSprintResponseFromSprint(),
+			newSprint.GetSprintResponseFromSprint(),
 		}
 
 		expectedJsonReponse, _ := json.Marshal(expectedResponse)
@@ -569,26 +569,26 @@ func assertProjectsEquality(t *testing.T, expected []byte, actual []byte) {
 	json.Unmarshal(actual, &actualProjects)
 
 	for index, expectedProject := range expectedProjects {
-		require.Equal(t, expectedProject.Name, actualProjects[index].Name)
-		require.Equal(t, expectedProject.Type, actualProjects[index].Type)
-		require.Equal(t, expectedProject.Client, actualProjects[index].Client)
-		require.Equal(t, expectedProject.ID, actualProjects[index].ID)
+		require.Equal(t, expectedProject.Name, actualProjects[index].Name, "The response Name should be the expected one")
+		require.Equal(t, expectedProject.Type, actualProjects[index].Type, "The response Type should be the expected one")
+		require.Equal(t, expectedProject.Client, actualProjects[index].Client, "The response Client should be the expected one")
+		require.Equal(t, expectedProject.ID, actualProjects[index].ID, "The response ID should be the expected one")
 	}
 
 }
 
 func assertSprintsEquality(t *testing.T, expected []byte, actual []byte) {
-	var expectedSprints []models.Sprint
+	var expectedSprints []models.GetSprintResponse
 	json.Unmarshal(expected, &expectedSprints)
 
-	var actualSprints []models.Sprint
+	var actualSprints []models.GetSprintResponse
 	json.Unmarshal(actual, &actualSprints)
 
 	for index, expectedSprint := range expectedSprints {
-		require.Equal(t, expectedSprint.Number, actualSprints[index].Number)
-		require.Equal(t, expectedSprint.Completed, actualSprints[index].Completed)
-		require.Equal(t, expectedSprint.ProjectID, actualSprints[index].ProjectID)
-		require.Equal(t, expectedSprint.ID, actualSprints[index].ID)
+		require.Equal(t, expectedSprint.Number, actualSprints[index].Number, "The response Number should be the expected one")
+		require.Equal(t, expectedSprint.Completed, actualSprints[index].Completed, "The response Completed should be the expected one")
+		require.Equal(t, expectedSprint.ProjectID, actualSprints[index].ProjectID, "The response ProjectID should be the expected one")
+		require.Equal(t, expectedSprint.ID, actualSprints[index].ID, "The response ID should be the expected one")
 	}
 
 }

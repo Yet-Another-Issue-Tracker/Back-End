@@ -63,13 +63,13 @@ func patchSprint(database *gorm.DB, sprint models.Sprint) error {
 	return nil
 }
 
-func getSprints(database *gorm.DB, projectId int) ([]models.Sprint, error) {
-	sprints := []models.Sprint{}
+func getSprints(database *gorm.DB, projectId int) ([]models.GetSprintResponse, error) {
+	sprints := []models.GetSprintResponse{}
 
-	result := database.Where("project_id = ?", projectId).Find(&sprints)
+	result := database.Model(&models.Sprint{}).Where("project_id = ?", projectId).Find(&sprints)
 
 	if result.Error != nil {
-		return []models.Sprint{}, &models.ErrorResponse{
+		return []models.GetSprintResponse{}, &models.ErrorResponse{
 			ErrorMessage: result.Error.Error(),
 			ErrorCode:    500,
 		}

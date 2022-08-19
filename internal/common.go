@@ -45,8 +45,7 @@ func GetConfig(path string) (cfg.EnvConfiguration, error) {
 
 func LogAndReturnErrorResponse(err error, w http.ResponseWriter) {
 	var errorResponse *models.ErrorResponse
-	ok := errors.As(err, &errorResponse)
-	fmt.Printf("|||||||||| %v", ok)
+	errors.As(err, &errorResponse)
 
 	log.WithField("error", errorResponse.ErrorMessage)
 
