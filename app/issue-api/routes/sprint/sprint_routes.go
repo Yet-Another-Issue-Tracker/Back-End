@@ -170,3 +170,43 @@ func createPatchSprintHandler(database *gorm.DB) http.HandlerFunc {
 		w.WriteHeader(http.StatusNoContent)
 	}
 }
+
+func createGetSprintsHandler(database *gorm.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+		vars := mux.Vars(r)
+
+		projectId, ok := vars["projectId"]
+		if !ok {
+			errorResponse := &models.ErrorResponse{
+				ErrorMessage: "Error reading projectId path param from request",
+				ErrorCode:    500,
+			}
+			internal.LogAndReturnErrorResponse(errorResponse, w)
+			return
+		}
+		projectIdInt, err := strconv.Atoi(projectId)
+		if err != nil {
+			errorResponse := &models.ErrorResponse{
+				ErrorMessage: "Error parsing projectId to int",
+				ErrorCode:    500,
+			}
+			internal.LogAndReturnErrorResponse(errorResponse, w)
+			return
+		}
+
+		sprints, err := getSprints(database, projectIdInt)
+		if err != nil {
+			internal.LogAndReturnErrorResponse(err, w)
+			return
+		}
+
+		responseBody, err := json.Marshal(sprints)
+		if err != nil {
+			internal.LogAndReturnErrorResponse(err, w)
+			return
+		}
+
+		w.Write(responseBody)
+	}
+}

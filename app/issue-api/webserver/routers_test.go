@@ -60,6 +60,7 @@ func TestStatusRoutes(testCase *testing.T) {
 	})
 }
 
+// Projects tests
 func TestCreateProjectHandler(testCase *testing.T) {
 	config, err := internal.GetConfig("../../../.env")
 	if err != nil {
@@ -331,6 +332,7 @@ func TestGetProjectsHandler(testCase *testing.T) {
 	})
 }
 
+// Sprints tests
 func TestCreateSprintHandler(testCase *testing.T) {
 	config, err := internal.GetConfig("../../../.env")
 	if err != nil {
@@ -498,6 +500,67 @@ func TestPatchSprintHandler(testCase *testing.T) {
 	})
 }
 
+func TestGetSprintsHandler(testCase *testing.T) {
+	config, err := internal.GetConfig("../../../.env")
+	if err != nil {
+		log.Fatalf("Error reading env configuration: %s", err.Error())
+		return
+	}
+
+	testRouter := NewRouter(config)
+	database, err := internal.ConnectDatabase(config)
+	if err != nil {
+		log.Fatalf("Error connecting to database %s", err.Error())
+		return
+	}
+
+	sprintNumber := "12345"
+	projectId := 1
+	inputSprint := models.Sprint{
+		ProjectID: projectId,
+		Completed: false,
+		Number:    sprintNumber,
+		StartDate: time.Now(),
+		EndDate:   time.Now().AddDate(0, 0, 7),
+	}
+
+	testCase.Run("/sprints get - 200 - sprints returned", func(t *testing.T) {
+		internal.SetupAndResetDatabase(database)
+
+		inputProject := models.Project{
+			Name:   internal.GetRandomStringName(10),
+			Type:   "project-type",
+			Client: "project-client",
+		}
+		newSprintNumber := "98765"
+		newSprint := inputSprint
+		newSprint.Number = newSprintNumber
+		database.Create(&inputProject)
+		database.Create(&inputSprint)
+		database.Create(&newSprint)
+
+		expectedResponse := []models.Sprint{
+			inputSprint,
+			newSprint,
+		}
+
+		expectedJsonReponse, _ := json.Marshal(expectedResponse)
+
+		responseRecorder := httptest.NewRecorder()
+		request, requestError := http.NewRequest(http.MethodGet, "/v1/projects/1/sprints", nil)
+		require.NoError(t, requestError, "Error creating the /sprints request")
+
+		testRouter.ServeHTTP(responseRecorder, request)
+		statusCode := responseRecorder.Result().StatusCode
+		require.Equal(t, http.StatusOK, statusCode, "The response statusCode should be 200")
+
+		rawBody := responseRecorder.Result().Body
+		body, readBodyError := ioutil.ReadAll(rawBody)
+		require.NoError(t, readBodyError)
+		assertSprintsEquality(t, expectedJsonReponse, body)
+	})
+}
+
 func assertProjectsEquality(t *testing.T, expected []byte, actual []byte) {
 	var expectedProjects []models.Project
 	json.Unmarshal(expected, &expectedProjects)
@@ -510,6 +573,22 @@ func assertProjectsEquality(t *testing.T, expected []byte, actual []byte) {
 		require.Equal(t, expectedProject.Type, actualProjects[index].Type)
 		require.Equal(t, expectedProject.Client, actualProjects[index].Client)
 		require.Equal(t, expectedProject.ID, actualProjects[index].ID)
+	}
+
+}
+
+func assertSprintsEquality(t *testing.T, expected []byte, actual []byte) {
+	var expectedSprints []models.Sprint
+	json.Unmarshal(expected, &expectedSprints)
+
+	var actualSprints []models.Sprint
+	json.Unmarshal(actual, &actualSprints)
+
+	for index, expectedSprint := range expectedSprints {
+		require.Equal(t, expectedSprint.Number, actualSprints[index].Number)
+		require.Equal(t, expectedSprint.Completed, actualSprints[index].Completed)
+		require.Equal(t, expectedSprint.ProjectID, actualSprints[index].ProjectID)
+		require.Equal(t, expectedSprint.ID, actualSprints[index].ID)
 	}
 
 }
