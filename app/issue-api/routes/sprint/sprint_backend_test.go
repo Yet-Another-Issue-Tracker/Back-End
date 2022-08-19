@@ -231,6 +231,7 @@ func TestGetSprints(testCase *testing.T) {
 		require.Equal(t, sprintNumber, foundSprints[0].Number)
 		require.Equal(t, sprintId, foundSprints[0].ID)
 	})
+
 	testCase.Run("getSprint return a list of sprints", func(t *testing.T) {
 		internal.SetupAndResetDatabase(database)
 		newSprintNumber := "newSprint"
@@ -245,6 +246,19 @@ func TestGetSprints(testCase *testing.T) {
 		require.Equal(t, newSprintNumber, foundSprints[1].Number)
 		require.Equal(t, sprint1Id, foundSprints[0].ID)
 		require.Equal(t, sprint2Id, foundSprints[1].ID)
+	})
+
+	testCase.Run("getSprint return empty list if project does not exist", func(t *testing.T) {
+		nonExistingProjectId := 99999
+		internal.SetupAndResetDatabase(database)
+
+		createProjectAndSprint(database)
+
+		foundSprints, err := getSprints(database, nonExistingProjectId)
+
+		require.Equal(t, nil, err)
+		require.Equal(t, []models.Sprint{}, foundSprints)
+
 	})
 
 }
