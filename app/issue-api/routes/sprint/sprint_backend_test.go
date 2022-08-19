@@ -13,6 +13,37 @@ import (
 	"gorm.io/gorm"
 )
 
+var sprintNumber = "12345"
+var projectId = 1
+
+func createTestProject(database *gorm.DB) uint {
+	inputProject := models.Project{
+		Name:   internal.GetRandomStringName(10),
+		Type:   "project-type",
+		Client: "project-client",
+	}
+	database.Create(&inputProject)
+
+	return inputProject.ID
+}
+func createTestSprint(database *gorm.DB, sprintNumber string) uint {
+	inputSprint := models.Sprint{
+		Number:    sprintNumber,
+		ProjectID: projectId,
+		StartDate: time.Now(),
+		EndDate:   time.Now().AddDate(0, 0, 7),
+		Completed: false,
+	}
+	database.Create(&inputSprint)
+
+	return inputSprint.ID
+}
+func createProjectAndSprint(database *gorm.DB) uint {
+	createTestProject(database)
+	sprintId := createTestSprint(database, sprintNumber)
+
+	return sprintId
+}
 func TestCreateSprint(testCase *testing.T) {
 	config, err := internal.GetConfig("../../../../.env")
 	if err != nil {
@@ -126,27 +157,6 @@ func TestPatchSprint(testCase *testing.T) {
 		log.Fatalf("Error connecting to database %s", err.Error())
 		return
 	}
-	sprintNumber := "12345"
-	projectId := 1
-
-	createProjectAndSprint := func(database *gorm.DB) uint {
-		inputProject := models.Project{
-			Name:   internal.GetRandomStringName(10),
-			Type:   "project-type",
-			Client: "project-client",
-		}
-		database.Create(&inputProject)
-
-		inputSprint := models.Sprint{
-			Number:    sprintNumber,
-			ProjectID: projectId,
-			StartDate: time.Now(),
-			EndDate:   time.Now().AddDate(0, 0, 7),
-			Completed: false,
-		}
-		database.Create(&inputSprint)
-		return inputSprint.ID
-	}
 
 	testCase.Run("patchSprint update the Completed field only", func(t *testing.T) {
 		internal.SetupAndResetDatabase(database)
@@ -196,4 +206,45 @@ func TestPatchSprint(testCase *testing.T) {
 		err := patchSprint(database, inputSprint)
 		require.Equal(t, expectedError, err.Error())
 	})
+}
+
+func TestGetSprints(testCase *testing.T) {
+	config, err := internal.GetConfig("../../../../.env")
+	if err != nil {
+		log.Fatalf("Error reading env configuration: %s", err.Error())
+		return
+	}
+
+	database, err := internal.ConnectDatabase(config)
+	if err != nil {
+		log.Fatalf("Error connecting to database %s", err.Error())
+		return
+	}
+
+	testCase.Run("getSprint return one sprint", func(t *testing.T) {
+		internal.SetupAndResetDatabase(database)
+		sprintId := createProjectAndSprint(database)
+
+		foundSprints, err := getSprints(database, projectId)
+
+		require.Equal(t, nil, err)
+		require.Equal(t, sprintNumber, foundSprints[0].Number)
+		require.Equal(t, sprintId, foundSprints[0].ID)
+	})
+	testCase.Run("getSprint return a list of sprints", func(t *testing.T) {
+		internal.SetupAndResetDatabase(database)
+		newSprintNumber := "newSprint"
+
+		sprint1Id := createProjectAndSprint(database)
+		sprint2Id := createTestSprint(database, newSprintNumber)
+
+		foundSprints, err := getSprints(database, projectId)
+
+		require.Equal(t, nil, err)
+		require.Equal(t, sprintNumber, foundSprints[0].Number)
+		require.Equal(t, newSprintNumber, foundSprints[1].Number)
+		require.Equal(t, sprint1Id, foundSprints[0].ID)
+		require.Equal(t, sprint2Id, foundSprints[1].ID)
+	})
+
 }

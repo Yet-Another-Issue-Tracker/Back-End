@@ -9,8 +9,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func createSprint(
-	database *gorm.DB, sprint models.Sprint) (uint, error) {
+func createSprint(database *gorm.DB, sprint models.Sprint) (uint, error) {
 
 	result := database.Create(&sprint)
 
@@ -62,4 +61,19 @@ func patchSprint(database *gorm.DB, sprint models.Sprint) error {
 		}
 	}
 	return nil
+}
+
+func getSprints(database *gorm.DB, projectId int) ([]models.Sprint, error) {
+	sprints := []models.Sprint{}
+
+	result := database.Where("project_id = ?", projectId).Find(&sprints)
+
+	if result.Error != nil {
+		return []models.Sprint{}, &models.ErrorResponse{
+			ErrorMessage: result.Error.Error(),
+			ErrorCode:    500,
+		}
+	}
+
+	return sprints, nil
 }
