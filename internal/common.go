@@ -46,6 +46,7 @@ func GetConfig(path string) (cfg.EnvConfiguration, error) {
 func LogAndReturnErrorResponse(err error, w http.ResponseWriter) {
 	var errorResponse *models.ErrorResponse
 	errors.As(err, &errorResponse)
+
 	log.WithField("error", errorResponse.ErrorMessage)
 
 	jsonResponse, _ := json.Marshal(err)

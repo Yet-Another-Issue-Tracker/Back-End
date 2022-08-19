@@ -38,5 +38,12 @@ func (r *sprintRouter) initRoutes() {
 			Pattern:     "/v1/projects/{projectId}/sprints/{sprintId}",
 			HandlerFunc: createPatchSprintHandler,
 		},
+
+		models.Route{
+			Name:        "GetSprint",
+			Method:      strings.ToUpper("Get"),
+			Pattern:     "/v1/projects/{projectId}/sprints",
+			HandlerFunc: createGetSprintsHandler,
+		},
 	}
 }

@@ -40,7 +40,8 @@ func initLogging(logLevel string) {
 }
 
 func main() {
-	config, err := internal.GetConfig("../../../../.env")
+	pwd, _ := os.Getwd()
+	config, err := internal.GetConfig(pwd + "/.env")
 	if err != nil {
 		log.Fatalf("Error reading env configuration: %s", err.Error())
 		return

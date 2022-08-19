@@ -12,7 +12,10 @@ import (
 	"gorm.io/gorm"
 )
 
-const DUPLICATE_KEY_ERROR = "duplicate key value violates unique constraint"
+var DATABASE_ERROR = map[string]string{
+	"DUPLICATE_KEY_ERROR": "duplicate key value violates unique constraint",
+	"FOREIGN_KEY_ERROR":   "violates foreign key constraint",
+}
 
 func getConnectionString(config cfg.EnvConfiguration) string {
 	return fmt.Sprintf("host=%s user=%s password=%s port=5432 dbname=%s",
@@ -57,5 +60,9 @@ func SetupAndResetDatabase(database *gorm.DB) {
 }
 
 func IsDuplicateKeyError(databaseError error) bool {
-	return strings.Contains(databaseError.Error(), DUPLICATE_KEY_ERROR)
+	return strings.Contains(databaseError.Error(), DATABASE_ERROR["DUPLICATE_KEY_ERROR"])
+}
+
+func IsForeignKeyError(databaseError error) bool {
+	return strings.Contains(databaseError.Error(), DATABASE_ERROR["FOREIGN_KEY_ERROR"])
 }
