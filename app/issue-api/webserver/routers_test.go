@@ -411,16 +411,16 @@ func TestPatchSprintHandler(testCase *testing.T) {
 	}
 
 	sprintNumber := "12345"
-
+	projectId := 1
 	inputSprint := models.Sprint{
-		ProjectID: 1,
+		ProjectID: projectId,
 		Completed: false,
 		Number:    sprintNumber,
 		StartDate: time.Now(),
 		EndDate:   time.Now().AddDate(0, 0, 7),
 	}
 
-	testCase.Run("/sprints - 204 - sprint patched", func(t *testing.T) {
+	testCase.Run("/sprints patch - 204 - sprint patched", func(t *testing.T) {
 		internal.SetupAndResetDatabase(database)
 		inputProject := models.Project{
 			Name:   internal.GetRandomStringName(10),
@@ -431,7 +431,8 @@ func TestPatchSprintHandler(testCase *testing.T) {
 		database.Create(&inputProject)
 		database.Create(&inputSprint)
 
-		patchSprint := models.CreateSprintRequest{
+		patchSprint := models.CreatePatchRequest{
+			ID:        inputSprint.ID,
 			Completed: true,
 		}
 		requestBody, err := json.Marshal(patchSprint)
@@ -451,6 +452,49 @@ func TestPatchSprintHandler(testCase *testing.T) {
 		var foundSprint models.Sprint
 		database.First(&foundSprint)
 		require.Equal(t, true, foundSprint.Completed)
+	})
+
+	testCase.Run("/sprints patch - 404 - project does not exists", func(t *testing.T) {
+		internal.SetupAndResetDatabase(database)
+		wrongProjectId := 99999
+		inputProject := models.Project{
+			Name:   internal.GetRandomStringName(10),
+			Type:   "project-type",
+			Client: "project-client",
+		}
+
+		database.Create(&inputProject)
+
+		database.Create(&inputSprint)
+		expectedResponse := models.ErrorResponse{
+			ErrorMessage: fmt.Sprintf("Project with id \"%d\" does not exists", wrongProjectId),
+			ErrorCode:    404,
+		}
+
+		expectedJsonReponse, _ := json.Marshal(expectedResponse)
+
+		patchSprint := models.CreatePatchRequest{
+			ID:        inputSprint.ID,
+			Completed: true,
+		}
+		requestBody, err := json.Marshal(patchSprint)
+		if err != nil {
+			log.WithField("error", err.Error()).Error("Error marshaling json")
+		}
+
+		responseRecorder := httptest.NewRecorder()
+		bodyReader := bytes.NewReader(requestBody)
+		request, requestError := http.NewRequest(http.MethodPatch, fmt.Sprintf("/v1/projects/%d/sprints/%d", wrongProjectId, inputSprint.ID), bodyReader)
+		require.NoError(t, requestError, "Error creating the /sprints request")
+
+		testRouter.ServeHTTP(responseRecorder, request)
+		statusCode := responseRecorder.Result().StatusCode
+		require.Equal(t, http.StatusNotFound, statusCode, "The response statusCode should be 404")
+
+		rawBody := responseRecorder.Result().Body
+		body, readBodyError := ioutil.ReadAll(rawBody)
+		require.NoError(t, readBodyError)
+		require.Equal(t, fmt.Sprintf("%s\n", string(expectedJsonReponse)), string(body), "The response body should be the expected one")
 	})
 }
 

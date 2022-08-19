@@ -12,6 +12,20 @@ import (
 	"gorm.io/gorm"
 )
 
+func getPatchSprintFromRequestBody(r *http.Request) (models.CreatePatchRequest, error) {
+	var requestBody models.CreatePatchRequest
+	err := json.NewDecoder(r.Body).Decode(&requestBody)
+	if err != nil {
+		log.WithField("error", err.Error()).Error("Error reading request body")
+		return models.CreatePatchRequest{}, &models.ErrorResponse{
+			ErrorMessage: "Error reading request body",
+			ErrorCode:    400,
+		}
+	}
+
+	return requestBody, nil
+}
+
 func getSprintFromRequestBody(r *http.Request) (models.CreateSprintRequest, error) {
 	var requestBody models.CreateSprintRequest
 	err := json.NewDecoder(r.Body).Decode(&requestBody)
@@ -111,7 +125,7 @@ func createPatchSprintHandler(database *gorm.DB) http.HandlerFunc {
 			internal.LogAndReturnErrorResponse(errorResponse, w)
 			return
 		}
-		requestBody, err := getSprintFromRequestBody(r)
+		requestBody, err := getPatchSprintFromRequestBody(r)
 		if err != nil {
 			internal.LogAndReturnErrorResponse(err, w)
 			return
@@ -149,7 +163,8 @@ func createPatchSprintHandler(database *gorm.DB) http.HandlerFunc {
 
 		patchError := patchSprint(database, requestSprint)
 		if patchError != nil {
-			internal.LogAndReturnErrorResponse(err, w)
+			internal.LogAndReturnErrorResponse(patchError, w)
+			return
 		}
 
 		w.WriteHeader(http.StatusNoContent)

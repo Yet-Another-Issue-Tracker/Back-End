@@ -127,6 +127,7 @@ func TestPatchSprint(testCase *testing.T) {
 		return
 	}
 	sprintNumber := "12345"
+	projectId := 1
 
 	createProjectAndSprint := func(database *gorm.DB) uint {
 		inputProject := models.Project{
@@ -138,7 +139,7 @@ func TestPatchSprint(testCase *testing.T) {
 
 		inputSprint := models.Sprint{
 			Number:    sprintNumber,
-			ProjectID: 1,
+			ProjectID: projectId,
 			StartDate: time.Now(),
 			EndDate:   time.Now().AddDate(0, 0, 7),
 			Completed: false,
@@ -164,6 +165,22 @@ func TestPatchSprint(testCase *testing.T) {
 
 		require.Equal(t, true, foundSprint.Completed)
 		require.Equal(t, sprintNumber, foundSprint.Number)
+	})
+
+	testCase.Run("createSprint returns error if project does not exists", func(t *testing.T) {
+		nonExistingProjectId := 99999
+		expectedError := fmt.Sprintf("Project with id \"%d\" does not exists", nonExistingProjectId)
+		internal.SetupAndResetDatabase(database)
+		sprintId := createProjectAndSprint(database)
+
+		inputSprint := models.Sprint{
+			ID:        sprintId,
+			ProjectID: nonExistingProjectId,
+			Completed: true,
+		}
+
+		err := patchSprint(database, inputSprint)
+		require.Equal(t, expectedError, err.Error())
 	})
 
 	testCase.Run("patchSprint return error if sprint does not exist", func(t *testing.T) {

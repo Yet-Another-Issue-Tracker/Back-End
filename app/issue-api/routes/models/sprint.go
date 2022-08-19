@@ -25,3 +25,13 @@ type CreateSprintRequest struct {
 	Completed         bool      `json:"completed,omitempty"`
 	MaxIssuePerSprint int       `json:"maxIssuePerSprint,omitempty"`
 }
+
+type CreatePatchRequest struct {
+	ID                uint      `json:"id" validate:"required"`
+	ProjectId         int       `json:"projectId" validate:"required"`
+	Number            string    `json:"number,omitempty"`
+	StartDate         time.Time `json:"startDate,omitempty"`
+	EndDate           time.Time `json:"endDate,omitempty"`
+	Completed         bool      `json:"completed,omitempty"`
+	MaxIssuePerSprint int       `json:"maxIssuePerSprint,omitempty"`
+}
