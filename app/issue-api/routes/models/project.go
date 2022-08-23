@@ -6,7 +6,6 @@ import (
 	"gorm.io/gorm"
 )
 
-//TODO adapt this to sprint structs
 type Project struct {
 	ID        uint `gorm:"primaryKey"`
 	Client    string
