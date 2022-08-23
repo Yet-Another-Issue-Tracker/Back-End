@@ -11,6 +11,14 @@ type Issue struct {
 	Project     Project
 	SprintID    int `gorm:"uniqueIndex:idx_member"`
 	Sprint      Project
+	Type        string
+	Title       string
+	Description string
+	Status      string
+	Assignee    string
+}
+
+type CreateIssueRequest struct {
 	Type        string `json:"type,omitempty"`
 	Title       string `json:"title,omitempty"`
 	Description string `json:"description,omitempty"`

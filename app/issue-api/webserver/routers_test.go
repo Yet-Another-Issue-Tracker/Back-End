@@ -60,6 +60,48 @@ func TestStatusRoutes(testCase *testing.T) {
 	})
 }
 
+func callCreateProjectAPI(createProject models.CreateProjectRequest, testRouter *negroni.Negroni) {
+	requestBody, err := json.Marshal(createProject)
+
+	if err != nil {
+		log.WithField("error", err.Error()).Error("Error marshaling json")
+	}
+
+	bodyReader := bytes.NewReader(requestBody)
+
+	request, _ := http.NewRequest(http.MethodPost, "/v1/projects", bodyReader)
+	responseRecorder := httptest.NewRecorder()
+
+	testRouter.ServeHTTP(responseRecorder, request)
+}
+
+func callCreateSprintAPI(
+	createSprint models.CreateSprintRequest,
+	projectId int,
+	testRouter *negroni.Negroni,
+) {
+	requestBody, err := json.Marshal(createSprint)
+
+	if err != nil {
+		log.WithField("error", err.Error()).Error("Error marshaling json")
+	}
+
+	bodyReader := bytes.NewReader(requestBody)
+
+	request, _ := http.NewRequest(http.MethodPost, fmt.Sprintf("/v1/projects/%d/sprints", projectId), bodyReader)
+	responseRecorder := httptest.NewRecorder()
+
+	testRouter.ServeHTTP(responseRecorder, request)
+}
+func callCreateProjectAndSprint(
+	createProject models.CreateProjectRequest,
+	createSprint models.CreateSprintRequest,
+	testRouter *negroni.Negroni,
+) {
+	callCreateProjectAPI(createProject, testRouter)
+	callCreateSprintAPI(createSprint, 1, testRouter)
+}
+
 // Projects tests
 func TestCreateProjectHandler(testCase *testing.T) {
 	config, err := internal.GetConfig("../../../.env")
@@ -77,6 +119,7 @@ func TestCreateProjectHandler(testCase *testing.T) {
 
 	projectName := internal.GetRandomStringName(10)
 
+	// TODO change this to CreateProjectRequest
 	inputProject := models.Project{
 		Name:   projectName,
 		Client: "client-name",
@@ -261,20 +304,7 @@ func TestCreateProjectHandler(testCase *testing.T) {
 		require.Equal(t, fmt.Sprintf("%s\n", string(expectedJsonReponse)), string(body), "The response body should be the expected one")
 	})
 }
-func callCreateProjectAPI(createProject models.CreateProjectRequest, testRouter *negroni.Negroni) {
-	requestBody, err := json.Marshal(createProject)
 
-	if err != nil {
-		log.WithField("error", err.Error()).Error("Error marshaling json")
-	}
-
-	bodyReader := bytes.NewReader(requestBody)
-
-	request, _ := http.NewRequest(http.MethodPost, "/v1/projects", bodyReader)
-	responseRecorder := httptest.NewRecorder()
-
-	testRouter.ServeHTTP(responseRecorder, request)
-}
 func TestGetProjectsHandler(testCase *testing.T) {
 	config, err := internal.GetConfig("../../../.env")
 	if err != nil {
@@ -349,6 +379,7 @@ func TestCreateSprintHandler(testCase *testing.T) {
 
 	sprintNumber := "12345"
 
+	// TODO change this to CreateSprintRequest
 	inputSprint := models.Sprint{
 		Number:    sprintNumber,
 		StartDate: time.Now(),
@@ -561,6 +592,78 @@ func TestGetSprintsHandler(testCase *testing.T) {
 	})
 }
 
+// Issue tests
+func TestCreateIssueHandler(testCase *testing.T) {
+	config, err := internal.GetConfig("../../../.env")
+	if err != nil {
+		log.Fatalf("Error reading env configuration: %s", err.Error())
+		return
+	}
+
+	testRouter := NewRouter(config)
+	database, err := internal.ConnectDatabase(config)
+	if err != nil {
+		log.Fatalf("Error connecting to database %s", err.Error())
+		return
+	}
+
+	sprintNumber := "12345"
+	inputProject := models.CreateProjectRequest{
+		Name:   internal.GetRandomStringName(10),
+		Type:   "project-type",
+		Client: "project-client",
+	}
+	inputSprint := models.CreateSprintRequest{
+		Number:    sprintNumber,
+		StartDate: time.Now(),
+		EndDate:   time.Now().AddDate(0, 0, 7),
+	}
+	expectedTitle := "Task title"
+	expectedDescription := "Task description"
+	inputIssue := models.CreateIssueRequest{
+		Type:        "Task",
+		Title:       expectedTitle,
+		Description: expectedDescription,
+		Status:      "To Do",
+		Assignee:    "Assignee",
+	}
+
+	testCase.Run("/issues - 200 - issue created", func(t *testing.T) {
+		internal.SetupAndResetDatabase(database)
+		callCreateProjectAndSprint(inputProject, inputSprint, testRouter)
+
+		expectedResponse := models.CreateResponse{
+			Id: "1",
+		}
+
+		expectedJsonReponse, _ := json.Marshal(expectedResponse)
+
+		requestBody, err := json.Marshal(inputIssue)
+		if err != nil {
+			log.WithField("error", err.Error()).Error("Error marshaling json")
+		}
+
+		bodyReader := bytes.NewReader(requestBody)
+
+		responseRecorder := httptest.NewRecorder()
+		request, requestError := http.NewRequest(http.MethodPost, "/v1/projects/1/sprints/1/issues", bodyReader)
+		require.NoError(t, requestError, "Error creating the /sprints request")
+
+		testRouter.ServeHTTP(responseRecorder, request)
+		statusCode := responseRecorder.Result().StatusCode
+		require.Equal(t, http.StatusOK, statusCode, "The response statusCode should be 200")
+
+		var foundIssue models.Issue
+		database.First(&foundIssue)
+
+		rawBody := responseRecorder.Result().Body
+		body, readBodyError := ioutil.ReadAll(rawBody)
+		require.NoError(t, readBodyError)
+		require.Equal(t, string(expectedJsonReponse), string(body), "The response body should be the expected one")
+		require.Equal(t, expectedTitle, foundIssue.Title)
+		require.Equal(t, expectedDescription, foundIssue.Description)
+	})
+}
 func assertProjectsEquality(t *testing.T, expected []byte, actual []byte) {
 	var expectedProjects []models.Project
 	json.Unmarshal(expected, &expectedProjects)

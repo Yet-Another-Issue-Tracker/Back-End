@@ -40,7 +40,7 @@ func (r *issueRouter) initRoutes() {
 		},
 
 		models.Route{
-			Name:        "PatchIssue",
+			Name:        "PatchIssuesById",
 			Method:      strings.ToUpper("Patch"),
 			Pattern:     "/v1/projects/{projectId}/sprints/{sprintId}/issues/{issueId}",
 			HandlerFunc: createPatchIssueHandler,
