@@ -1,19 +1,15 @@
 package models
 
 import (
-	"time"
-
 	"gorm.io/gorm"
 )
 
 type Project struct {
-	ID        uint `gorm:"primaryKey"`
-	Client    string
-	Name      string `gorm:"unique"`
-	Type      string
-	CreatedAt time.Time
-	UpdatedAt time.Time
-	DeletedAt gorm.DeletedAt `gorm:"index"`
+	gorm.Model
+	ID     uint `gorm:"primaryKey"`
+	Client string
+	Name   string `gorm:"unique"`
+	Type   string
 }
 
 type CreateProjectRequest struct {

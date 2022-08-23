@@ -41,16 +41,19 @@ func ConnectDatabase(config cfg.EnvConfiguration) (*gorm.DB, error) {
 func dropTables(database *gorm.DB) {
 	database.Migrator().DropTable(&models.Project{})
 	database.Migrator().DropTable(&models.Sprint{})
+	database.Migrator().DropTable(&models.Issue{})
 }
 
 func automigrateDatabaseSchema(database *gorm.DB) {
 	database.AutoMigrate(&models.Project{})
 	database.AutoMigrate(&models.Sprint{})
+	database.AutoMigrate(&models.Issue{})
 }
 
 func resetSequenceId(database *gorm.DB) {
 	database.Exec("ALTER SEQUENCE projects_id_seq RESTART WITH 1")
 	database.Exec("ALTER SEQUENCE sprints_id_seq RESTART WITH 1")
+	database.Exec("ALTER SEQUENCE issues_id_seq RESTART WITH 1")
 }
 
 func SetupAndResetDatabase(database *gorm.DB) {
