@@ -73,4 +73,31 @@ func TestCreateIssue(testCase *testing.T) {
 
 		require.Equal(t, 2, len(foundIssue))
 	})
+
+	testCase.Run("createIssue returns error if sprint does not exists", func(t *testing.T) {
+		wrongSprintId := 99999
+		expectedError := fmt.Sprintf("Sprint with id \"%d\" does not exists", wrongSprintId)
+
+		inputIssue.SprintID = wrongSprintId
+
+		internal.SetupAndResetDatabase(database)
+		internal.CreateProjectAndSprint(database, sprintNumber)
+
+		_, err := createIssue(database, inputIssue)
+
+		require.Equal(t, expectedError, err.Error())
+	})
+
+	testCase.Run("createIssue returns error if project does not exists", func(t *testing.T) {
+		wrongProjectId := 99999
+		expectedError := fmt.Sprintf("Project with id \"%d\" does not exists", wrongProjectId)
+
+		inputIssue.ProjectID = wrongProjectId
+
+		internal.SetupAndResetDatabase(database)
+
+		_, err := createIssue(database, inputIssue)
+
+		require.Equal(t, expectedError, err.Error())
+	})
 }

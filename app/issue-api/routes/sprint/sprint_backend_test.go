@@ -57,7 +57,7 @@ func TestCreateSprint(testCase *testing.T) {
 		require.Equal(t, string(expectedJsonReponse), fmt.Sprint(response))
 	})
 
-	testCase.Run("create two sprint", func(t *testing.T) {
+	testCase.Run("successfully create two sprint", func(t *testing.T) {
 		expectedSprint2Number := "98765"
 
 		internal.SetupAndResetDatabase(database)
