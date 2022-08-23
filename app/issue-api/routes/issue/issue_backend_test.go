@@ -55,4 +55,22 @@ func TestCreateIssue(testCase *testing.T) {
 		require.Equal(t, expectedTitle, foundIssue.Title)
 		require.Equal(t, expectedDescription, foundIssue.Description)
 	})
+
+	testCase.Run("successfully create two issue on same sprint", func(t *testing.T) {
+		internal.SetupAndResetDatabase(database)
+		projectId, sprintId := internal.CreateProjectAndSprint(database, sprintNumber)
+		inputIssue.ProjectID = int(projectId)
+		inputIssue.SprintID = int(sprintId)
+
+		_, err1 := createIssue(database, inputIssue)
+		require.Equal(t, nil, err1)
+		_, err2 := createIssue(database, inputIssue)
+		require.Equal(t, nil, err2)
+
+		var foundIssue []models.Issue
+
+		database.Find(&foundIssue)
+
+		require.Equal(t, 2, len(foundIssue))
+	})
 }
