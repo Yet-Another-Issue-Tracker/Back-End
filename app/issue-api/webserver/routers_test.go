@@ -476,7 +476,7 @@ func TestPatchSprintHandler(testCase *testing.T) {
 		database.Create(&inputProject)
 		database.Create(&inputSprint)
 
-		patchSprint := models.CreatePatchRequest{
+		patchSprint := models.PatchSprintRequest{
 			ID:        inputSprint.ID,
 			Completed: true,
 		}
@@ -518,7 +518,7 @@ func TestPatchSprintHandler(testCase *testing.T) {
 
 		expectedJsonReponse, _ := json.Marshal(expectedResponse)
 
-		patchSprint := models.CreatePatchRequest{
+		patchSprint := models.PatchSprintRequest{
 			ID:        inputSprint.ID,
 			Completed: true,
 		}
@@ -733,4 +733,70 @@ func TestGetIssuesHandler(testCase *testing.T) {
 		internal.AssertIssuesEquality(t, expectedJsonReponse, body)
 	})
 
+}
+
+func TestPatchIssueHandler(testCase *testing.T) {
+	config, err := internal.GetConfig("../../../.env")
+	if err != nil {
+		log.Fatalf("Error reading env configuration: %s", err.Error())
+		return
+	}
+
+	testRouter := NewRouter(config)
+	database, err := internal.ConnectDatabase(config)
+	if err != nil {
+		log.Fatalf("Error connecting to database %s", err.Error())
+		return
+	}
+
+	expectedTitle := "Task title"
+	expectedDescription := "Task description"
+	projectId := 1
+	sprintId := 1
+	inputIssue := models.Issue{
+		Type:        "Task",
+		ProjectID:   projectId,
+		SprintID:    sprintId,
+		Title:       expectedTitle,
+		Description: expectedDescription,
+		Status:      "To Do",
+		Assignee:    "Assignee",
+	}
+
+	testCase.Run("/issues patch - 204 - issue is patched", func(t *testing.T) {
+		internal.SetupAndResetDatabase(database)
+		callCreateProjectAndSprint(testRouter)
+		database.Create(&inputIssue)
+		expectedStatus := "Completed"
+		inputIssue.Status = expectedStatus
+
+		patchIssue := models.PatchIssueRequest{
+			ID:     inputIssue.ID,
+			Status: expectedStatus,
+		}
+		requestBody, err := json.Marshal(patchIssue)
+		if err != nil {
+			log.WithField("error", err.Error()).Error("Error marshaling json")
+		}
+
+		responseRecorder := httptest.NewRecorder()
+		bodyReader := bytes.NewReader(requestBody)
+
+		request, requestError := http.NewRequest(
+			http.MethodPatch,
+			fmt.Sprintf("/v1/projects/%d/sprints/%d/issues/%d", projectId, sprintId, inputIssue.ID),
+			bodyReader,
+		)
+		require.NoError(t, requestError, "Error creating the /issues request")
+
+		testRouter.ServeHTTP(responseRecorder, request)
+		statusCode := responseRecorder.Result().StatusCode
+		require.Equal(t, http.StatusNoContent, statusCode, "The response statusCode should be 204")
+
+		var issueSprint models.Issue
+		database.First(&issueSprint)
+		require.Equal(t, expectedStatus, issueSprint.Status)
+		require.Equal(t, expectedTitle, issueSprint.Title)
+		require.Equal(t, expectedDescription, issueSprint.Description)
+	})
 }

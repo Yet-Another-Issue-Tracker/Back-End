@@ -41,6 +41,17 @@ type GetIssueResponse struct {
 	UpdatedAt   time.Time `json:"updatedAt,omitempty"`
 }
 
+type PatchIssueRequest struct {
+	ID          uint   `json:"id,omitempty"`
+	ProjectID   int    `json:"projectId,omitempty"`
+	SprintID    int    `json:"sprintId,omitempty"`
+	Type        string `json:"type,omitempty"`
+	Title       string `json:"title,omitempty"`
+	Description string `json:"description,omitempty"`
+	Status      string `json:"status,omitempty"`
+	Assignee    string `json:"assignee,omitempty"`
+}
+
 func (issue Issue) GetIssueResponseFromIssue() GetIssueResponse {
 	return GetIssueResponse{
 		ID:          issue.ID,

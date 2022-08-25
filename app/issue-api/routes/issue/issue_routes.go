@@ -45,6 +45,19 @@ func getIssueFromRequestBody(request *http.Request) (models.CreateIssueRequest, 
 	return requestBody, nil
 }
 
+func getPatchIssueFromRequestBody(r *http.Request) (models.PatchIssueRequest, error) {
+	var requestBody models.PatchIssueRequest
+	err := json.NewDecoder(r.Body).Decode(&requestBody)
+	if err != nil {
+		log.WithField("error", err.Error()).Error("Error reading request body")
+		return models.PatchIssueRequest{}, &models.ErrorResponse{
+			ErrorMessage: "Error reading request body",
+			ErrorCode:    400,
+		}
+	}
+
+	return requestBody, nil
+}
 func createAddIssueHandler(database *gorm.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
@@ -116,6 +129,71 @@ func createAddIssueHandler(database *gorm.DB) http.HandlerFunc {
 func createPatchIssueHandler(database *gorm.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+		projectId, sprintId, err := getProjectIdAndSprintIdFromRequest(r)
+		if err != nil {
+			internal.LogAndReturnErrorResponse(err, w)
+			return
+		}
+
+		projectIdInt, err := strconv.Atoi(projectId)
+		if err != nil {
+			internal.LogAndReturnErrorResponse(&models.ErrorResponse{
+				ErrorMessage: "Error parsing projectId to int",
+				ErrorCode:    500,
+			}, w)
+			return
+		}
+
+		sprintIdInt, err := strconv.Atoi(sprintId)
+		if err != nil {
+			internal.LogAndReturnErrorResponse(&models.ErrorResponse{
+				ErrorMessage: "Error parsing sprintId to int",
+				ErrorCode:    500,
+			}, w)
+			return
+		}
+
+		vars := mux.Vars(r)
+		issueId, issueOk := vars["issueId"]
+		if !issueOk {
+			internal.LogAndReturnErrorResponse(&models.ErrorResponse{
+				ErrorMessage: "Error parsing sprintId to int",
+				ErrorCode:    500,
+			}, w)
+			return
+		}
+
+		requestBody, err := getPatchIssueFromRequestBody(r)
+		if err != nil {
+			internal.LogAndReturnErrorResponse(err, w)
+			return
+		}
+
+		issueUid, err := strconv.ParseUint(issueId, 10, 32)
+		if err != nil {
+			internal.LogAndReturnErrorResponse(&models.ErrorResponse{
+				ErrorMessage: "Error parsing sprintId to uint",
+				ErrorCode:    500,
+			}, w)
+			return
+		}
+
+		requestIssue := models.Issue{
+			ProjectID:   projectIdInt,
+			SprintID:    sprintIdInt,
+			ID:          uint(issueUid),
+			Type:        requestBody.Type,
+			Title:       requestBody.Title,
+			Description: requestBody.Description,
+			Status:      requestBody.Status,
+			Assignee:    requestBody.Assignee,
+		}
+
+		patchError := patchIssue(database, requestIssue)
+		if patchError != nil {
+			internal.LogAndReturnErrorResponse(patchError, w)
+			return
+		}
 
 		w.WriteHeader(http.StatusNoContent)
 	}
