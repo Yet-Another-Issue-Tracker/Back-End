@@ -163,3 +163,50 @@ func TestGetIssues(testCase *testing.T) {
 		require.Equal(t, []models.GetIssueResponse{}, foundIssues)
 	})
 }
+
+func TestPatchIssue(testCase *testing.T) {
+	config, err := internal.GetConfig("../../../../.env")
+	if err != nil {
+		log.Fatalf("Error reading env configuration: %s", err.Error())
+		return
+	}
+
+	database, err := internal.ConnectDatabase(config)
+	if err != nil {
+		log.Fatalf("Error connecting to database %s", err.Error())
+		return
+	}
+
+	expectedTitle := "Task title"
+	expectedDescription := "Task description"
+	inputIssue := models.Issue{
+		Type:        "Task",
+		Title:       expectedTitle,
+		Description: expectedDescription,
+		Status:      "To Do",
+		Assignee:    "Assignee",
+	}
+
+	testCase.Run("patchIssue update the status field only", func(t *testing.T) {
+		internal.SetupAndResetDatabase(database)
+		projectId, sprintId := internal.CreateProjectAndSprint(database)
+		inputIssue.ProjectID = int(projectId)
+		inputIssue.SprintID = int(sprintId)
+		issueId, _ := createIssue(database, inputIssue)
+		expectedStatus := "Completed"
+
+		patchIssueInput := models.Issue{
+			ID:     issueId,
+			Status: expectedStatus,
+		}
+		err := patchIssue(database, patchIssueInput)
+		require.Equal(t, nil, err)
+
+		var foundIssue models.Issue
+		database.First(&foundIssue)
+
+		require.Equal(t, expectedStatus, foundIssue.Status)
+		require.Equal(t, expectedTitle, foundIssue.Title)
+		require.Equal(t, expectedDescription, foundIssue.Description)
+	})
+}

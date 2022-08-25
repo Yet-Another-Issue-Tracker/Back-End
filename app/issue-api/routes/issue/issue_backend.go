@@ -53,3 +53,34 @@ func getIssues(database *gorm.DB, projectId int, sprintId int) ([]models.GetIssu
 	}
 	return issues, nil
 }
+
+func patchIssue(database *gorm.DB, issue models.Issue) error {
+	result := database.Model(&issue).Updates(issue)
+
+	if result.Error != nil {
+		if internal.IsForeignKeyError(result.Error) {
+			entity := "Sprint"
+			value := issue.SprintID
+			if strings.Contains(result.Error.Error(), "project") {
+				entity = "Project"
+				value = issue.ProjectID
+			}
+
+			return &models.ErrorResponse{
+				ErrorMessage: fmt.Sprintf("%s with id \"%d\" does not exists", entity, value),
+				ErrorCode:    404,
+			}
+		}
+		return &models.ErrorResponse{
+			ErrorMessage: result.Error.Error(),
+			ErrorCode:    500,
+		}
+	}
+	if result.RowsAffected == 0 {
+		return &models.ErrorResponse{
+			ErrorMessage: fmt.Sprintf("Issue with id \"%d\" does not exists", issue.ID),
+			ErrorCode:    404,
+		}
+	}
+	return nil
+}

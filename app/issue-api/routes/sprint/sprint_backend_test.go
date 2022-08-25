@@ -154,13 +154,13 @@ func TestPatchSprint(testCase *testing.T) {
 		internal.SetupAndResetDatabase(database)
 		_, sprintId := internal.CreateProjectAndSprint(database)
 
-		inputSprint := models.Sprint{
+		patchSprintInput := models.Sprint{
 			ID:        sprintId,
 			ProjectID: nonExistingProjectId,
 			Completed: true,
 		}
 
-		err := patchSprint(database, inputSprint)
+		err := patchSprint(database, patchSprintInput)
 		require.Equal(t, expectedError, err.Error())
 	})
 
@@ -169,12 +169,12 @@ func TestPatchSprint(testCase *testing.T) {
 		sprintId := uint(999999)
 		expectedError := fmt.Sprintf("Sprint with id \"%d\" does not exists", sprintId)
 
-		inputSprint := models.Sprint{
+		patchSprintInput := models.Sprint{
 			ID:        sprintId,
 			Completed: true,
 		}
 
-		err := patchSprint(database, inputSprint)
+		err := patchSprint(database, patchSprintInput)
 		require.Equal(t, expectedError, err.Error())
 	})
 }
