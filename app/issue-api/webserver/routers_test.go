@@ -17,6 +17,60 @@ import (
 	"github.com/urfave/negroni"
 )
 
+func callCreateProjectAPI(createProject models.CreateProjectRequest, testRouter *negroni.Negroni) {
+	requestBody, err := json.Marshal(createProject)
+
+	if err != nil {
+		log.WithField("error", err.Error()).Error("Error marshaling json")
+	}
+
+	bodyReader := bytes.NewReader(requestBody)
+
+	request, _ := http.NewRequest(http.MethodPost, "/v1/projects", bodyReader)
+	responseRecorder := httptest.NewRecorder()
+
+	testRouter.ServeHTTP(responseRecorder, request)
+}
+
+func callCreateSprintAPI(
+	createSprint models.CreateSprintRequest,
+	projectId int,
+	testRouter *negroni.Negroni,
+) {
+	requestBody, err := json.Marshal(createSprint)
+
+	if err != nil {
+		log.WithField("error", err.Error()).Error("Error marshaling json")
+	}
+
+	bodyReader := bytes.NewReader(requestBody)
+
+	request, _ := http.NewRequest(http.MethodPost, fmt.Sprintf("/v1/projects/%d/sprints", projectId), bodyReader)
+	responseRecorder := httptest.NewRecorder()
+
+	testRouter.ServeHTTP(responseRecorder, request)
+}
+
+// TODO remove this and use database.Create()
+func callCreateProjectAndSprint(
+	testRouter *negroni.Negroni,
+) {
+	sprintNumber := internal.GetRandomStringName(10)
+	inputProject := models.CreateProjectRequest{
+		Name:   sprintNumber,
+		Type:   "project-type",
+		Client: "project-client",
+	}
+	inputSprint := models.CreateSprintRequest{
+		Number:    sprintNumber,
+		StartDate: time.Now(),
+		EndDate:   time.Now().AddDate(0, 0, 7),
+	}
+	callCreateProjectAPI(inputProject, testRouter)
+	callCreateSprintAPI(inputSprint, 1, testRouter)
+}
+
+// Health routes tests
 func TestStatusRoutes(testCase *testing.T) {
 	serviceName := "issue-service"
 	serviceVersion := "1.0.0"
@@ -58,48 +112,6 @@ func TestStatusRoutes(testCase *testing.T) {
 		require.NoError(t, readBodyError)
 		require.Equal(t, expectedResponse, string(body), "The response body should be the expected one")
 	})
-}
-
-func callCreateProjectAPI(createProject models.CreateProjectRequest, testRouter *negroni.Negroni) {
-	requestBody, err := json.Marshal(createProject)
-
-	if err != nil {
-		log.WithField("error", err.Error()).Error("Error marshaling json")
-	}
-
-	bodyReader := bytes.NewReader(requestBody)
-
-	request, _ := http.NewRequest(http.MethodPost, "/v1/projects", bodyReader)
-	responseRecorder := httptest.NewRecorder()
-
-	testRouter.ServeHTTP(responseRecorder, request)
-}
-
-func callCreateSprintAPI(
-	createSprint models.CreateSprintRequest,
-	projectId int,
-	testRouter *negroni.Negroni,
-) {
-	requestBody, err := json.Marshal(createSprint)
-
-	if err != nil {
-		log.WithField("error", err.Error()).Error("Error marshaling json")
-	}
-
-	bodyReader := bytes.NewReader(requestBody)
-
-	request, _ := http.NewRequest(http.MethodPost, fmt.Sprintf("/v1/projects/%d/sprints", projectId), bodyReader)
-	responseRecorder := httptest.NewRecorder()
-
-	testRouter.ServeHTTP(responseRecorder, request)
-}
-func callCreateProjectAndSprint(
-	createProject models.CreateProjectRequest,
-	createSprint models.CreateSprintRequest,
-	testRouter *negroni.Negroni,
-) {
-	callCreateProjectAPI(createProject, testRouter)
-	callCreateSprintAPI(createSprint, 1, testRouter)
 }
 
 // Projects tests
@@ -358,7 +370,7 @@ func TestGetProjectsHandler(testCase *testing.T) {
 		body, readBodyError := ioutil.ReadAll(rawBody)
 		require.NoError(t, readBodyError)
 
-		assertProjectsEquality(t, expectedJsonReponse, body)
+		internal.AssertProjectsEquality(t, expectedJsonReponse, body)
 	})
 }
 
@@ -578,7 +590,7 @@ func TestGetSprintsHandler(testCase *testing.T) {
 		expectedJsonReponse, _ := json.Marshal(expectedResponse)
 
 		responseRecorder := httptest.NewRecorder()
-		request, requestError := http.NewRequest(http.MethodGet, "/v1/projects/1/sprints", nil)
+		request, requestError := http.NewRequest(http.MethodGet, fmt.Sprintf("/v1/projects/%d/sprints", projectId), nil)
 		require.NoError(t, requestError, "Error creating the /sprints request")
 
 		testRouter.ServeHTTP(responseRecorder, request)
@@ -588,7 +600,7 @@ func TestGetSprintsHandler(testCase *testing.T) {
 		rawBody := responseRecorder.Result().Body
 		body, readBodyError := ioutil.ReadAll(rawBody)
 		require.NoError(t, readBodyError)
-		assertSprintsEquality(t, expectedJsonReponse, body)
+		internal.AssertSprintsEquality(t, expectedJsonReponse, body)
 	})
 }
 
@@ -607,17 +619,6 @@ func TestCreateIssueHandler(testCase *testing.T) {
 		return
 	}
 
-	sprintNumber := "12345"
-	inputProject := models.CreateProjectRequest{
-		Name:   internal.GetRandomStringName(10),
-		Type:   "project-type",
-		Client: "project-client",
-	}
-	inputSprint := models.CreateSprintRequest{
-		Number:    sprintNumber,
-		StartDate: time.Now(),
-		EndDate:   time.Now().AddDate(0, 0, 7),
-	}
 	expectedTitle := "Task title"
 	expectedDescription := "Task description"
 	inputIssue := models.CreateIssueRequest{
@@ -630,7 +631,7 @@ func TestCreateIssueHandler(testCase *testing.T) {
 
 	testCase.Run("/issues - 200 - issue created", func(t *testing.T) {
 		internal.SetupAndResetDatabase(database)
-		callCreateProjectAndSprint(inputProject, inputSprint, testRouter)
+		callCreateProjectAndSprint(testRouter)
 
 		expectedResponse := models.CreateResponse{
 			Id: "1",
@@ -664,34 +665,72 @@ func TestCreateIssueHandler(testCase *testing.T) {
 		require.Equal(t, expectedDescription, foundIssue.Description)
 	})
 }
-func assertProjectsEquality(t *testing.T, expected []byte, actual []byte) {
-	var expectedProjects []models.Project
-	json.Unmarshal(expected, &expectedProjects)
 
-	var actualProjects []models.Project
-	json.Unmarshal(actual, &actualProjects)
-
-	for index, expectedProject := range expectedProjects {
-		require.Equal(t, expectedProject.Name, actualProjects[index].Name, "The response Name should be the expected one")
-		require.Equal(t, expectedProject.Type, actualProjects[index].Type, "The response Type should be the expected one")
-		require.Equal(t, expectedProject.Client, actualProjects[index].Client, "The response Client should be the expected one")
-		require.Equal(t, expectedProject.ID, actualProjects[index].ID, "The response ID should be the expected one")
+func TestGetIssuesHandler(testCase *testing.T) {
+	config, err := internal.GetConfig("../../../.env")
+	if err != nil {
+		log.Fatalf("Error reading env configuration: %s", err.Error())
+		return
 	}
 
-}
-
-func assertSprintsEquality(t *testing.T, expected []byte, actual []byte) {
-	var expectedSprints []models.GetSprintResponse
-	json.Unmarshal(expected, &expectedSprints)
-
-	var actualSprints []models.GetSprintResponse
-	json.Unmarshal(actual, &actualSprints)
-
-	for index, expectedSprint := range expectedSprints {
-		require.Equal(t, expectedSprint.Number, actualSprints[index].Number, "The response Number should be the expected one")
-		require.Equal(t, expectedSprint.Completed, actualSprints[index].Completed, "The response Completed should be the expected one")
-		require.Equal(t, expectedSprint.ProjectID, actualSprints[index].ProjectID, "The response ProjectID should be the expected one")
-		require.Equal(t, expectedSprint.ID, actualSprints[index].ID, "The response ID should be the expected one")
+	testRouter := NewRouter(config)
+	database, err := internal.ConnectDatabase(config)
+	if err != nil {
+		log.Fatalf("Error connecting to database %s", err.Error())
+		return
 	}
+
+	expectedTitle := "Task title"
+	expectedDescription := "Task description"
+	projectId := 1
+	sprintId := 1
+	inputIssue1 := models.Issue{
+		Type:        "Task",
+		ProjectID:   projectId,
+		SprintID:    sprintId,
+		Title:       expectedTitle,
+		Description: expectedDescription,
+		Status:      "To Do",
+		Assignee:    "Assignee",
+	}
+	inputIssue2 := models.Issue{
+		Type:        "Task 2",
+		ProjectID:   projectId,
+		SprintID:    sprintId,
+		Title:       expectedTitle,
+		Description: expectedDescription,
+		Status:      "To Do",
+		Assignee:    "Assignee",
+	}
+	testCase.Run("/issues get - 200 - issues returned", func(t *testing.T) {
+		internal.SetupAndResetDatabase(database)
+		callCreateProjectAndSprint(testRouter)
+		database.Create(&inputIssue1)
+		database.Create(&inputIssue2)
+
+		expectedResponse := []models.GetIssueResponse{
+			inputIssue1.GetIssueResponseFromIssue(),
+			inputIssue2.GetIssueResponseFromIssue(),
+		}
+
+		expectedJsonReponse, _ := json.Marshal(expectedResponse)
+
+		responseRecorder := httptest.NewRecorder()
+		request, requestError := http.NewRequest(
+			http.MethodGet,
+			fmt.Sprintf("/v1/projects/%d/sprints/%d/issues", projectId, sprintId),
+			nil,
+		)
+		require.NoError(t, requestError, "Error creating the /issues request")
+
+		testRouter.ServeHTTP(responseRecorder, request)
+		statusCode := responseRecorder.Result().StatusCode
+		require.Equal(t, http.StatusOK, statusCode, "The response statusCode should be 200")
+
+		rawBody := responseRecorder.Result().Body
+		body, readBodyError := ioutil.ReadAll(rawBody)
+		require.NoError(t, readBodyError)
+		internal.AssertIssuesEquality(t, expectedJsonReponse, body)
+	})
 
 }

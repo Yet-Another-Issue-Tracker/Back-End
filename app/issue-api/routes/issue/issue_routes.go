@@ -2,7 +2,6 @@ package issue
 
 import (
 	"encoding/json"
-	"fmt"
 	"issue-service/app/issue-api/routes/models"
 	"issue-service/internal"
 	"net/http"
@@ -103,7 +102,7 @@ func createAddIssueHandler(database *gorm.DB) http.HandlerFunc {
 			internal.LogAndReturnErrorResponse(err, w)
 			return
 		}
-		fmt.Printf("|||||||| %d", issueId)
+
 		response, err := internal.GetCreateResponseBody(issueId)
 		if err != nil {
 			internal.LogAndReturnErrorResponse(err, w)
@@ -125,5 +124,44 @@ func createPatchIssueHandler(database *gorm.DB) http.HandlerFunc {
 func createGetIssuesHandler(database *gorm.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+		projectId, sprintId, err := getProjectIdAndSprintIdFromRequest(r)
+		if err != nil {
+			internal.LogAndReturnErrorResponse(err, w)
+			return
+		}
+
+		projectIdInt, err := strconv.Atoi(projectId)
+		if err != nil {
+			errorResponse := &models.ErrorResponse{
+				ErrorMessage: "Error parsing projectId to int",
+				ErrorCode:    500,
+			}
+			internal.LogAndReturnErrorResponse(errorResponse, w)
+			return
+		}
+
+		sprintIdInt, err := strconv.Atoi(sprintId)
+		if err != nil {
+			errorResponse := &models.ErrorResponse{
+				ErrorMessage: "Error parsing sprintId to int",
+				ErrorCode:    500,
+			}
+			internal.LogAndReturnErrorResponse(errorResponse, w)
+			return
+		}
+
+		issues, err := getIssues(database, projectIdInt, sprintIdInt)
+		if err != nil {
+			internal.LogAndReturnErrorResponse(err, w)
+			return
+		}
+
+		responseBody, err := json.Marshal(issues)
+		if err != nil {
+			internal.LogAndReturnErrorResponse(err, w)
+			return
+		}
+
+		w.Write(responseBody)
 	}
 }

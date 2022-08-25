@@ -1,9 +1,12 @@
 package internal
 
 import (
+	"encoding/json"
 	models "issue-service/app/issue-api/routes/models"
+	"testing"
 	"time"
 
+	"github.com/stretchr/testify/require"
 	"gorm.io/gorm"
 )
 
@@ -48,4 +51,51 @@ func CreateProjectAndSprint(database *gorm.DB) (projectId uint, sprintId uint) {
 	sprintId = CreateTestSprint(database, "12345", int(projectId))
 
 	return
+}
+
+func AssertProjectsEquality(t *testing.T, expected []byte, actual []byte) {
+	var expectedProjects []models.Project
+	json.Unmarshal(expected, &expectedProjects)
+
+	var actualProjects []models.Project
+	json.Unmarshal(actual, &actualProjects)
+
+	for index, expectedProject := range expectedProjects {
+		require.Equal(t, expectedProject.Name, actualProjects[index].Name, "The response Name should be the expected one")
+		require.Equal(t, expectedProject.Type, actualProjects[index].Type, "The response Type should be the expected one")
+		require.Equal(t, expectedProject.Client, actualProjects[index].Client, "The response Client should be the expected one")
+		require.Equal(t, expectedProject.ID, actualProjects[index].ID, "The response ID should be the expected one")
+	}
+
+}
+
+func AssertSprintsEquality(t *testing.T, expected []byte, actual []byte) {
+	var expectedSprints []models.GetSprintResponse
+	json.Unmarshal(expected, &expectedSprints)
+
+	var actualSprints []models.GetSprintResponse
+	json.Unmarshal(actual, &actualSprints)
+
+	for index, expectedSprint := range expectedSprints {
+		require.Equal(t, expectedSprint.Number, actualSprints[index].Number, "The response Number should be the expected one")
+		require.Equal(t, expectedSprint.Completed, actualSprints[index].Completed, "The response Completed should be the expected one")
+		require.Equal(t, expectedSprint.ProjectID, actualSprints[index].ProjectID, "The response ProjectID should be the expected one")
+		require.Equal(t, expectedSprint.ID, actualSprints[index].ID, "The response ID should be the expected one")
+	}
+}
+
+func AssertIssuesEquality(t *testing.T, expected []byte, actual []byte) {
+	var expectedIssues []models.GetIssueResponse
+	json.Unmarshal(expected, &expectedIssues)
+
+	var actualIssues []models.GetIssueResponse
+	json.Unmarshal(actual, &actualIssues)
+
+	for index, expectedIssue := range expectedIssues {
+		require.Equal(t, expectedIssue.Title, actualIssues[index].Title, "The response Title should be the expected one")
+		require.Equal(t, expectedIssue.Description, actualIssues[index].Description, "The response Description should be the expected one")
+		require.Equal(t, expectedIssue.ProjectID, actualIssues[index].ProjectID, "The response ProjectID should be the expected one")
+		require.Equal(t, expectedIssue.SprintID, actualIssues[index].SprintID, "The response SprintID should be the expected one")
+		require.Equal(t, expectedIssue.ID, actualIssues[index].ID, "The response ID should be the expected one")
+	}
 }

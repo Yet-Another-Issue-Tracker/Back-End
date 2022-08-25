@@ -40,3 +40,18 @@ type GetIssueResponse struct {
 	CreatedAt   time.Time `json:"createdAt,omitempty"`
 	UpdatedAt   time.Time `json:"updatedAt,omitempty"`
 }
+
+func (issue Issue) GetIssueResponseFromIssue() GetIssueResponse {
+	return GetIssueResponse{
+		ID:          issue.ID,
+		ProjectID:   issue.ProjectID,
+		SprintID:    issue.SprintID,
+		Type:        issue.Type,
+		Title:       issue.Title,
+		Description: issue.Description,
+		Status:      issue.Status,
+		Assignee:    issue.Assignee,
+		CreatedAt:   issue.CreatedAt,
+		UpdatedAt:   issue.UpdatedAt,
+	}
+}
