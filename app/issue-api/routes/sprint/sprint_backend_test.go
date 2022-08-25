@@ -166,11 +166,11 @@ func TestPatchSprint(testCase *testing.T) {
 
 	testCase.Run("patchSprint return error if sprint does not exist", func(t *testing.T) {
 		internal.SetupAndResetDatabase(database)
-		sprintId := uint(999999)
-		expectedError := fmt.Sprintf("Sprint with id \"%d\" does not exists", sprintId)
+		wrongSprintId := uint(999999)
+		expectedError := fmt.Sprintf("Sprint with id \"%d\" does not exists", wrongSprintId)
 
 		patchSprintInput := models.Sprint{
-			ID:        sprintId,
+			ID:        wrongSprintId,
 			Completed: true,
 		}
 

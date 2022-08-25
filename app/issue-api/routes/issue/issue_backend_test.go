@@ -209,4 +209,20 @@ func TestPatchIssue(testCase *testing.T) {
 		require.Equal(t, expectedTitle, foundIssue.Title)
 		require.Equal(t, expectedDescription, foundIssue.Description)
 	})
+
+	testCase.Run("patchIssue return error if issue does not exists", func(t *testing.T) {
+		internal.SetupAndResetDatabase(database)
+		projectId, sprintId := internal.CreateProjectAndSprint(database)
+		inputIssue.ProjectID = int(projectId)
+		inputIssue.SprintID = int(sprintId)
+		wrongIssueId := uint(99999)
+		expectedError := fmt.Sprintf("Issue with id \"%d\" does not exists", wrongIssueId)
+
+		patchIssueInput := models.Issue{
+			ID:     wrongIssueId,
+			Status: "Completed",
+		}
+		err := patchIssue(database, patchIssueInput)
+		require.Equal(t, expectedError, err.Error())
+	})
 }
