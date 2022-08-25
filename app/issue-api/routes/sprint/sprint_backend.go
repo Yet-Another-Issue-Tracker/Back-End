@@ -10,7 +10,6 @@ import (
 )
 
 func createSprint(database *gorm.DB, sprint models.Sprint) (uint, error) {
-
 	result := database.Create(&sprint)
 
 	if result.Error != nil {

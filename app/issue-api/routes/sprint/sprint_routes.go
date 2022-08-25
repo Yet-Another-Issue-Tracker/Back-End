@@ -12,12 +12,12 @@ import (
 	"gorm.io/gorm"
 )
 
-func getPatchSprintFromRequestBody(r *http.Request) (models.CreatePatchRequest, error) {
-	var requestBody models.CreatePatchRequest
+func getPatchSprintFromRequestBody(r *http.Request) (models.PatchSprintRequest, error) {
+	var requestBody models.PatchSprintRequest
 	err := json.NewDecoder(r.Body).Decode(&requestBody)
 	if err != nil {
 		log.WithField("error", err.Error()).Error("Error reading request body")
-		return models.CreatePatchRequest{}, &models.ErrorResponse{
+		return models.PatchSprintRequest{}, &models.ErrorResponse{
 			ErrorMessage: "Error reading request body",
 			ErrorCode:    400,
 		}

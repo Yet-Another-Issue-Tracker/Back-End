@@ -26,7 +26,7 @@ type CreateSprintRequest struct {
 	MaxIssuePerSprint int       `json:"maxIssuePerSprint,omitempty"`
 }
 
-type CreatePatchRequest struct {
+type PatchSprintRequest struct {
 	ID                uint      `json:"id" validate:"required"`
 	ProjectID         int       `json:"projectId" validate:"required"`
 	Number            string    `json:"number,omitempty"`

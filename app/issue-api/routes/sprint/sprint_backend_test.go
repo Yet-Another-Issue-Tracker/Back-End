@@ -10,40 +10,11 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/require"
-	"gorm.io/gorm"
 )
 
 var sprintNumber = "12345"
 var projectId = 1
 
-func createTestProject(database *gorm.DB) uint {
-	inputProject := models.Project{
-		Name:   internal.GetRandomStringName(10),
-		Type:   "project-type",
-		Client: "project-client",
-	}
-	database.Create(&inputProject)
-
-	return inputProject.ID
-}
-func createTestSprint(database *gorm.DB, sprintNumber string) uint {
-	inputSprint := models.Sprint{
-		Number:    sprintNumber,
-		ProjectID: projectId,
-		StartDate: time.Now(),
-		EndDate:   time.Now().AddDate(0, 0, 7),
-		Completed: false,
-	}
-	database.Create(&inputSprint)
-
-	return inputSprint.ID
-}
-func createProjectAndSprint(database *gorm.DB) uint {
-	createTestProject(database)
-	sprintId := createTestSprint(database, sprintNumber)
-
-	return sprintId
-}
 func TestCreateSprint(testCase *testing.T) {
 	config, err := internal.GetConfig("../../../../.env")
 	if err != nil {
@@ -86,7 +57,7 @@ func TestCreateSprint(testCase *testing.T) {
 		require.Equal(t, string(expectedJsonReponse), fmt.Sprint(response))
 	})
 
-	testCase.Run("create two sprint", func(t *testing.T) {
+	testCase.Run("successfully create two sprint", func(t *testing.T) {
 		expectedSprint2Number := "98765"
 
 		internal.SetupAndResetDatabase(database)
@@ -160,7 +131,7 @@ func TestPatchSprint(testCase *testing.T) {
 
 	testCase.Run("patchSprint update the Completed field only", func(t *testing.T) {
 		internal.SetupAndResetDatabase(database)
-		sprintId := createProjectAndSprint(database)
+		_, sprintId := internal.CreateProjectAndSprint(database)
 
 		inputSprint := models.Sprint{
 			ID:        sprintId,
@@ -181,29 +152,29 @@ func TestPatchSprint(testCase *testing.T) {
 		nonExistingProjectId := 99999
 		expectedError := fmt.Sprintf("Project with id \"%d\" does not exists", nonExistingProjectId)
 		internal.SetupAndResetDatabase(database)
-		sprintId := createProjectAndSprint(database)
+		_, sprintId := internal.CreateProjectAndSprint(database)
 
-		inputSprint := models.Sprint{
+		patchSprintInput := models.Sprint{
 			ID:        sprintId,
 			ProjectID: nonExistingProjectId,
 			Completed: true,
 		}
 
-		err := patchSprint(database, inputSprint)
+		err := patchSprint(database, patchSprintInput)
 		require.Equal(t, expectedError, err.Error())
 	})
 
 	testCase.Run("patchSprint return error if sprint does not exist", func(t *testing.T) {
 		internal.SetupAndResetDatabase(database)
-		sprintId := uint(999999)
-		expectedError := fmt.Sprintf("Sprint with id \"%d\" does not exists", sprintId)
+		wrongSprintId := uint(999999)
+		expectedError := fmt.Sprintf("Sprint with id \"%d\" does not exists", wrongSprintId)
 
-		inputSprint := models.Sprint{
-			ID:        sprintId,
+		patchSprintInput := models.Sprint{
+			ID:        wrongSprintId,
 			Completed: true,
 		}
 
-		err := patchSprint(database, inputSprint)
+		err := patchSprint(database, patchSprintInput)
 		require.Equal(t, expectedError, err.Error())
 	})
 }
@@ -223,7 +194,7 @@ func TestGetSprints(testCase *testing.T) {
 
 	testCase.Run("getSprint return one sprint", func(t *testing.T) {
 		internal.SetupAndResetDatabase(database)
-		sprintId := createProjectAndSprint(database)
+		_, sprintId := internal.CreateProjectAndSprint(database)
 
 		foundSprints, err := getSprints(database, projectId)
 
@@ -236,10 +207,10 @@ func TestGetSprints(testCase *testing.T) {
 		internal.SetupAndResetDatabase(database)
 		newSprintNumber := "newSprint"
 
-		sprint1Id := createProjectAndSprint(database)
-		sprint2Id := createTestSprint(database, newSprintNumber)
+		projectId, sprint1Id := internal.CreateProjectAndSprint(database)
+		sprint2Id := internal.CreateTestSprint(database, newSprintNumber, int(projectId))
 
-		foundSprints, err := getSprints(database, projectId)
+		foundSprints, err := getSprints(database, int(projectId))
 
 		require.Equal(t, nil, err)
 		require.Equal(t, sprintNumber, foundSprints[0].Number)
@@ -252,7 +223,7 @@ func TestGetSprints(testCase *testing.T) {
 		nonExistingProjectId := 99999
 		internal.SetupAndResetDatabase(database)
 
-		createProjectAndSprint(database)
+		internal.CreateProjectAndSprint(database)
 
 		foundSprints, err := getSprints(database, nonExistingProjectId)
 
