@@ -799,4 +799,36 @@ func TestPatchIssueHandler(testCase *testing.T) {
 		require.Equal(t, expectedTitle, issueSprint.Title)
 		require.Equal(t, expectedDescription, issueSprint.Description)
 	})
+
+	testCase.Run("/issues patch - 404 - issue does not exists", func(t *testing.T) {
+		internal.SetupAndResetDatabase(database)
+		callCreateProjectAndSprint(testRouter)
+		database.Create(&inputIssue)
+		expectedStatus := "Completed"
+		inputIssue.Status = expectedStatus
+		wrongIssueId := 99999
+
+		patchIssue := models.PatchIssueRequest{
+			ID:     inputIssue.ID,
+			Status: expectedStatus,
+		}
+		requestBody, err := json.Marshal(patchIssue)
+		if err != nil {
+			log.WithField("error", err.Error()).Error("Error marshaling json")
+		}
+
+		responseRecorder := httptest.NewRecorder()
+		bodyReader := bytes.NewReader(requestBody)
+
+		request, requestError := http.NewRequest(
+			http.MethodPatch,
+			fmt.Sprintf("/v1/projects/%d/sprints/%d/issues/%d", projectId, sprintId, wrongIssueId),
+			bodyReader,
+		)
+		require.NoError(t, requestError, "Error creating the /issues request")
+
+		testRouter.ServeHTTP(responseRecorder, request)
+		statusCode := responseRecorder.Result().StatusCode
+		require.Equal(t, http.StatusNotFound, statusCode, "The response statusCode should be 404")
+	})
 }
