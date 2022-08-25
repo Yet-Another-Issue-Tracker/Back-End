@@ -149,6 +149,17 @@ func TestGetIssues(testCase *testing.T) {
 
 		require.Equal(t, nil, err)
 		require.Equal(t, []models.GetIssueResponse{}, foundIssues)
+	})
 
+	testCase.Run("getIssues return empty list if sprint does not exist", func(t *testing.T) {
+		nonExistingSprinttId := 99999
+		internal.SetupAndResetDatabase(database)
+		projectId, sprintId := internal.CreateProjectAndSprint(database)
+		internal.CreateTestIssue(database, int(projectId), int(sprintId))
+
+		foundIssues, err := getIssues(database, int(projectId), nonExistingSprinttId)
+
+		require.Equal(t, nil, err)
+		require.Equal(t, []models.GetIssueResponse{}, foundIssues)
 	})
 }
