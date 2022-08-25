@@ -25,7 +25,6 @@ func TestCreateIssue(testCase *testing.T) {
 	}
 	expectedResponse := 1
 	expectedJsonReponse, _ := json.Marshal(expectedResponse)
-	sprintNumber := "12345"
 	expectedTitle := "Task title"
 	expectedDescription := "Task description"
 	inputIssue := models.Issue{
@@ -38,7 +37,7 @@ func TestCreateIssue(testCase *testing.T) {
 
 	testCase.Run("createIssue return the new id", func(t *testing.T) {
 		internal.SetupAndResetDatabase(database)
-		projectId, sprintId := internal.CreateProjectAndSprint(database, sprintNumber)
+		projectId, sprintId := internal.CreateProjectAndSprint(database)
 		inputIssue.ProjectID = int(projectId)
 		inputIssue.SprintID = int(sprintId)
 
@@ -58,7 +57,7 @@ func TestCreateIssue(testCase *testing.T) {
 
 	testCase.Run("successfully create two issue on same sprint", func(t *testing.T) {
 		internal.SetupAndResetDatabase(database)
-		projectId, sprintId := internal.CreateProjectAndSprint(database, sprintNumber)
+		projectId, sprintId := internal.CreateProjectAndSprint(database)
 		inputIssue.ProjectID = int(projectId)
 		inputIssue.SprintID = int(sprintId)
 
@@ -81,7 +80,7 @@ func TestCreateIssue(testCase *testing.T) {
 		inputIssue.SprintID = wrongSprintId
 
 		internal.SetupAndResetDatabase(database)
-		internal.CreateProjectAndSprint(database, sprintNumber)
+		internal.CreateProjectAndSprint(database)
 
 		_, err := createIssue(database, inputIssue)
 
@@ -99,5 +98,30 @@ func TestCreateIssue(testCase *testing.T) {
 		_, err := createIssue(database, inputIssue)
 
 		require.Equal(t, expectedError, err.Error())
+	})
+}
+
+func TestGetIssues(testCase *testing.T) {
+	config, err := internal.GetConfig("../../../../.env")
+	if err != nil {
+		log.Fatalf("Error reading env configuration: %s", err.Error())
+		return
+	}
+
+	database, err := internal.ConnectDatabase(config)
+	if err != nil {
+		log.Fatalf("Error connecting to database %s", err.Error())
+		return
+	}
+
+	testCase.Run("getIssues return one issue", func(t *testing.T) {
+		internal.SetupAndResetDatabase(database)
+		projectId, sprintId := internal.CreateProjectAndSprint(database)
+		issueId := internal.CreateTestIssue(database, int(projectId), int(sprintId))
+
+		foundIssues, err := getIssues(database, int(projectId), int(sprintId))
+
+		require.Equal(t, nil, err)
+		require.Equal(t, issueId, foundIssues[0].ID)
 	})
 }

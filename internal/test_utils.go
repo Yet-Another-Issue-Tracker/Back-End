@@ -29,9 +29,23 @@ func CreateTestSprint(database *gorm.DB, sprintNumber string, projectId int) uin
 
 	return inputSprint.ID
 }
-func CreateProjectAndSprint(database *gorm.DB, sprintNumber string) (projectId uint, sprintId uint) {
+func CreateTestIssue(database *gorm.DB, projectId int, sprintId int) uint {
+	inputIssue := models.Issue{
+		ProjectID:   projectId,
+		SprintID:    sprintId,
+		Type:        "Task",
+		Title:       "Issue title",
+		Description: "Issue description",
+		Status:      "To Do",
+		Assignee:    "Assignee",
+	}
+	database.Create(&inputIssue)
+
+	return inputIssue.ID
+}
+func CreateProjectAndSprint(database *gorm.DB) (projectId uint, sprintId uint) {
 	projectId = CreateTestProject(database)
-	sprintId = CreateTestSprint(database, sprintNumber, int(projectId))
+	sprintId = CreateTestSprint(database, "12345", int(projectId))
 
 	return
 }

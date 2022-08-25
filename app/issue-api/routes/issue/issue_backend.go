@@ -39,3 +39,17 @@ func createIssue(database *gorm.DB, issue models.Issue) (uint, error) {
 
 	return issue.ID, nil
 }
+
+func getIssues(database *gorm.DB, projectId int, sprintId int) ([]models.GetIssueResponse, error) {
+	issues := []models.GetIssueResponse{}
+
+	result := database.Model(&models.Issue{}).Where("project_id = ? and sprint_id = ?", projectId, sprintId).Find(&issues)
+
+	if result.Error != nil {
+		return []models.GetIssueResponse{}, &models.ErrorResponse{
+			ErrorMessage: result.Error.Error(),
+			ErrorCode:    500,
+		}
+	}
+	return issues, nil
+}

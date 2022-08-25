@@ -131,7 +131,7 @@ func TestPatchSprint(testCase *testing.T) {
 
 	testCase.Run("patchSprint update the Completed field only", func(t *testing.T) {
 		internal.SetupAndResetDatabase(database)
-		_, sprintId := internal.CreateProjectAndSprint(database, sprintNumber)
+		_, sprintId := internal.CreateProjectAndSprint(database)
 
 		inputSprint := models.Sprint{
 			ID:        sprintId,
@@ -152,7 +152,7 @@ func TestPatchSprint(testCase *testing.T) {
 		nonExistingProjectId := 99999
 		expectedError := fmt.Sprintf("Project with id \"%d\" does not exists", nonExistingProjectId)
 		internal.SetupAndResetDatabase(database)
-		_, sprintId := internal.CreateProjectAndSprint(database, sprintNumber)
+		_, sprintId := internal.CreateProjectAndSprint(database)
 
 		inputSprint := models.Sprint{
 			ID:        sprintId,
@@ -194,7 +194,7 @@ func TestGetSprints(testCase *testing.T) {
 
 	testCase.Run("getSprint return one sprint", func(t *testing.T) {
 		internal.SetupAndResetDatabase(database)
-		_, sprintId := internal.CreateProjectAndSprint(database, sprintNumber)
+		_, sprintId := internal.CreateProjectAndSprint(database)
 
 		foundSprints, err := getSprints(database, projectId)
 
@@ -207,7 +207,7 @@ func TestGetSprints(testCase *testing.T) {
 		internal.SetupAndResetDatabase(database)
 		newSprintNumber := "newSprint"
 
-		projectId, sprint1Id := internal.CreateProjectAndSprint(database, sprintNumber)
+		projectId, sprint1Id := internal.CreateProjectAndSprint(database)
 		sprint2Id := internal.CreateTestSprint(database, newSprintNumber, int(projectId))
 
 		foundSprints, err := getSprints(database, int(projectId))
@@ -223,7 +223,7 @@ func TestGetSprints(testCase *testing.T) {
 		nonExistingProjectId := 99999
 		internal.SetupAndResetDatabase(database)
 
-		internal.CreateProjectAndSprint(database, sprintNumber)
+		internal.CreateProjectAndSprint(database)
 
 		foundSprints, err := getSprints(database, nonExistingProjectId)
 
