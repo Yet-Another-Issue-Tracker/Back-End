@@ -124,4 +124,18 @@ func TestGetIssues(testCase *testing.T) {
 		require.Equal(t, nil, err)
 		require.Equal(t, issueId, foundIssues[0].ID)
 	})
+
+	testCase.Run("getIssues return one issue", func(t *testing.T) {
+		internal.SetupAndResetDatabase(database)
+		projectId, sprintId := internal.CreateProjectAndSprint(database)
+		issueId1 := internal.CreateTestIssue(database, int(projectId), int(sprintId))
+		issueId2 := internal.CreateTestIssue(database, int(projectId), int(sprintId))
+
+		foundIssues, err := getIssues(database, int(projectId), int(sprintId))
+
+		require.Equal(t, nil, err)
+		require.Equal(t, 2, len(foundIssues))
+		require.Equal(t, issueId1, foundIssues[0].ID)
+		require.Equal(t, issueId2, foundIssues[1].ID)
+	})
 }
